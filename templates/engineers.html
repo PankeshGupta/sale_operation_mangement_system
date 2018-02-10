@@ -1,0 +1,309 @@
+  <!DOCTYPE html>
+  <html lang="en" ng-app="sna_oms">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>SNA OMS v2 Engineer Management</title>
+
+    <!-- Bootstrap -->
+    <link rel="icon" href="http://snapower.net/assets/images/faviconsna.png" type="image/gif" sizes="16x16">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- Bootstrap core CSS-->
+    <!-- <link href="static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet"> -->
+
+    <!-- <script src="static/js/sb-angular.min.js"></script> -->
+    <script src="https://code.angularjs.org/1.6.6/angular.js"></script>
+
+    <script src="static/angular/engineers.js"></script>
+
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-cookies.js"></script>
+  </head>
+  <link rel="stylesheet" href="static/css/engineer.css">
+  <body ng-controller="engineersController" ng-cloak ng-init="get_engineer_list()">
+   <header>
+   <img src="static/tasks/img/logo.png" style=" width: 69px;">
+   <button type="submit"  data-toggle="modal" data-target="#LogoutModal" class="btn btn-danger" style="float: right;"> <strong ng-bind="user_name | uppercase" style="color: #ffffff;"> </strong><span style="margin-left: 10px;"><img src="static/tasks/img/logout.png" alt="" style="width:20px; "></span></button>
+  </header>
+
+<!--   <div class="row" ng-show="loader">
+    <img src="" alt="">
+    <img src="static/tasks/img/logo.png" style=" width: 100%;">
+    <p>Loading ...</p>
+
+  </div> -->
+
+
+
+  <div class="row" style="padding: 0;margin: -6px 0 0 0;" >
+
+    <div class="col-md-2" style="
+    height: 100vh;
+    background: #39536d;
+    padding:0;
+    height: calc(100vh - 65px);
+    ">
+     <ul>
+        <a href="#"><li class="active">Engineer</li></a>
+        <a href="/tasks"><li>Tasks</li></a>
+
+     </ul>
+    </div>
+
+  <div class="col-md-10" style="overflow-y: scroll;
+      max-height: calc(100vh - 65px);">    
+  <div style="padding: 25px;">
+
+  <!-- Add engineer details form  -->
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" ng-click="add_engineer()">
+    Add Engineer
+  </button>
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header" ng-hide="is_edit">
+          <button type="button" id="btn_close" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="myModalLabel"><strong> Add Engineer</strong> </h4>
+        </div>
+        <div class="modal-header" ng-show="is_edit">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="myModalLabel"><strong> Edit Engineer </strong></h4>
+        </div>
+
+        <div class="modal-body">
+
+          <form name="engineers_form" id='engineers_form' novalidate >
+
+            <div class="form-group">
+              <label for="engineer_name"><h3>Engineer Name <span style="color: red ">*</span></h3></label>
+              <input name ="engineer_name" type="text" class="form-control" id="engineer_name" ng-model="engineer_name" 
+              ng-pattern="/[aA-zZ\s]$/" placeholder="Name" minlength=3 maxlength=40 tabindex="1" autofocus="true" required >
+            </div>
+
+            <div style="color: red" ng-show="engineers_form.engineer_name.$invalid">
+              <div ng-show="engineers_form.$submitted && engineers_form.engineer_name.$invalid">
+                <p> A valid name contains only alphabets</p>
+              </div>
+            </div>
+
+            
+            <div class="form-group">
+              <label for="engineer_phone"><h3>Phone Number <span style="color: red ">*</span> </h3></label>  
+              <div class="input-group">
+              <span class="input-group-addon" id="basic-addon1">+91</span>
+              <input name ="engineer_phone" type="text" class="form-control" id="engineer_phone" placeholder="Phone Number" ng-model="engineer_phone" ng-pattern="/^[0-9]*$/"  minlength=10 maxlength=10 tabindex="2" required >
+              </div>
+              
+
+            </div>
+          
+            <div class="error" ng-show="engineers_form.engineer_phone.$invalid">
+              <div ng-show="engineers_form.$submitted && engineers_form.engineer_phone.$invalid" style="color:red">
+                <!-- <p style="color: red"> Please enter a valid phone number </p> -->
+                <p style="font-size: 13px "> A valid phone number should be 10 digit number, containing only numbers between 0-9 </p>
+              </div>
+            </div>
+            <div class="error" ng-show="add_form_error">
+              <p ng-bind="add_form_error" style="color: red"></p>
+              
+            </div>
+
+          </form>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal" tabindex="4">Close</button>
+          
+          <button id="submit"  type="submit" ng-click="engineers_add_update(engineers_form.$valid)" class="btn btn-primary" tabindex="3">Save</button>
+        
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 10px;" ng-hide="form_view">
+    <div class="card mb-3">
+      <div class="row">
+        <div class="card-header col-md-8">
+          <h3 class="fa fa-table">Engineers List </h3>
+        </div>
+        <div class="col-md-4">
+          <input style="width: 100%; padding: 10px; margin-top: 10px; border: none; background: #f8f8f8; color: #39536d; font-weight: 700; text-transform: uppercase; border-radius:5px;" type="text" name="search_box" placeholder="Please enter search Name" ng-model="engineer_search_string">
+        </div>
+
+      </div>    
+      
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" >
+            <thead>
+
+              <tr>
+                <th>S.No</th>
+                <th>Name</th>
+                <th>Phone no.</th>
+                <th>Actions</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tfoot> 
+              <tr>
+                <th>S.No</th>
+                <th>Name</th> 
+                <th>Phone no.</th>
+                <th>Actions</th>
+                <th>Status</th> 
+              </tr>
+            </tfoot>
+            <tbody>
+              
+              <tr ng-repeat="engineer in filtered_engineer_list = ( engineer_list | filter: {name:engineer_search_string}) ">
+                <td ng-bind="$index+1"></td>
+                <td ng-bind="engineer.name"></td>
+                <td ng-bind="engineer.phone"></td>
+                <td>
+                  
+                  <button class= "btn btn-primary" ng-click="edit_engineer_info(engineer)" data-toggle="modal" data-target="#myModal" > Edit </button>
+                
+                </td>
+                <td style="position: relative;"> <span ng-show="engineer.is_active" style="position: absolute;top: 10px;right: 10px;"> <img src="static/images/online.png" style=" width: 10px; "></span>
+                  <span ng-hide="engineer.is_active" style="position: absolute;top: 10px;right: 10px;"> <img src="static/images/offline.png" style=" width: 10px; ">
+                  </span>
+                                      
+                      <button class ="btn btn-danger" data-toggle="modal" data-target="#deactivate_modal" ng-click="engineer_status_deactivate(engineer,false)" ng-show="engineer.is_active"> Deactivate </button>
+                      <button class= "btn btn-success" ng-click="engineer_status(true,engineer)" ng-hide="engineer.is_active"> Activate </button>
+
+                  </td>
+                  
+                </tr>
+                <!--   <td colspan="5" ng-hide="engineer_list.length">
+                    <h4 style="text-align: center;">
+                      Loading engineers list ...  
+                    </h4>
+                  </td>  
+                </tr> -->
+                
+                <tr>
+                  <td colspan="5" ng-hide="filtered_engineer_list.length > 0">
+                    <h4 style="text-align: center;" ng-hide="engineer_list.length">
+                      Loading engineers list ...  
+                    </h4>
+
+                    <h4 style="text-align: center;" ng-show="engineer_list.length">
+                      No engineers to show  
+                    </h4>
+                    
+                  </td>
+                </tr>
+              
+              
+              
+            </tbody>
+          </table>
+        </div>
+
+        </div>
+      </div>
+    </div>
+
+      </div>
+
+    </div>
+
+ 
+  </div>
+
+  </div>
+  <!-- Modal -->
+    <div class="modal fade" id="LogoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-body">
+            <strong style="text-align: center;">Are you sure you want to Logout ?</strong>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" ng-click="logout()">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>  
+
+    <div id="snackbar" ng-class="{show:snackbar}" ><p ng-bind="form_status_message"> .......</p></div>
+    
+    <div class="modal fade" id="deactivate_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <h4 class="modal-title" id="myModalLabel">Deactivate <strong ng-bind="deactivate_engineer.name"></strong></h4>
+	      </div>
+	      <div class="modal-body">
+	        Are you sure you want to deactivate the engineer ?
+	        <div ng-if="deactivate_engineer.tasks.length>0">
+	        	<strong ng-bind="deactivate_engineer.name"></strong> has the following task assigned please verify the <strong>Completed</strong> tasks or reassign the <strong>Assigned</strong> tasks to another engineer before proceeding .
+    				<div>
+    				<br>
+    				
+    	        	<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+    	        		<thead>
+    	        			<tr>
+    	        				<th>Name</th>
+    	        				<th>Schedule Date</th>
+    	        				<th>Status</th>	        				
+    	        			</tr>
+    	        		</thead>
+    	        		<tr ng-repeat="task in deactivate_engineer.tasks " ng-show="deactivate_engineer.tasks">
+    	        			<td ng-bind="task.title"></td>
+    	        			<td ng-bind="task.schedule_date"></td>
+    	        			<td ng-bind="task.task_status"></td>
+    	        		</tr>
+                  <tr ng-hide="deactivate_engineer.tasks">
+                    <td colspan="3">
+                      
+                    <h4 style="text-align: center;">Loading ....</h4>
+                    
+                    </td>
+                  </tr>
+
+
+    	        	 </table>
+    				</div>
+            <div class="row modal-body"" style="color: red" ng-if="(deactivate_engineer.tasks.length>0)" >
+            <span> Force Deactivating <strong ng-bind="deactivate_engineer.name"> </strong> will make change status of above tasks to <strong style="color: black ">Unassigned</strong>.</span>
+          </div>
+	        </div>
+	        
+	        <div ng-if="!(deactivate_engineer.tasks.length>0)">
+	        	<strong ng-bind="deactivate_engineer.name" ></strong> has no <strong>Completed</strong> or <strong>Assigned</strong> tasks . The engineer can be safely deactivated .
+	        </div>
+	      
+	      
+	      </div>
+	      <div class="modal-footer">
+	      	
+	        <button type="button" id="close" class="btn btn-default" data-dismiss="modal">Close</button>
+	        <button type="button" class="btn btn-primary btn-danger" ng-if="(deactivate_engineer.tasks.length>0)" ng-click ="engineer_status_deactivate(deactivate_engineer,true)">Force Deactivate </button>
+	        <button type="button" class="btn btn-primary" ng-if="!(deactivate_engineer.tasks.length>0)" ng-click ="engineer_status_deactivate(deactivate_engineer,true)">Deactivate </button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+    <!-- <div id="mydiv">
+    <img src="lib/jQuery/images/ajax-loader.gif" class="ajax-loader"/>
+    </div> -->
+
+  </body>
+     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="static/angular/script.js"></script>
+  </html>

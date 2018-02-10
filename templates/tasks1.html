@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Live task stream</title>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">   
+<link rel="stylesheet" href="static/css/tasks.css">
+<link rel="stylesheet" href="static/css/AdminLTE.css"> 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.4/css/select2.css">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style type="text/css">
+  .card.horizontal .card-image {
+    max-width: 21%;
+  }
+  div:focus {
+    outline: 0px solid transparent;
+  }
+  .control-sidebar-menu > li > a {
+      display: block;
+      padding: 1px 15px;
+  }
+  .left-nav-container ul li, .right-nav-container ul li {
+    line-height: 2;
+    border-bottom: 2px solid #423e3e !important;
+  }
+  #status{
+    position: absolute;
+    top: 5px;
+    right: 19px;
+  }
+  #status i{
+    font-size: 16px;
+  }
+
+</style>
+</head>
+<body ng-app="myApp" ng-cloak>
+  
+  <div id="map-container" ng-controller="MyCtrl as vm">
+    
+
+    <span class="left" style="display: block;position: absolute;left: 1%;top: 1%;"><button class="btn-floating waves-effect waves-light red"><i class="menu-icon fa fa-long-arrow-right" style="font-size: 16px;"></i></button>
+    </span>
+    
+    <ng-map zoom="7" id="task_map" zoom-to-include-markers="auto" style="width:100%; height: 100vh !important;">
+      <marker ng-repeat="p in vm.positions"
+        position="{*p.pos*}" id='{*p.labl*}' title="pos: {*p.pos*}" label="{*p.labl*}" on-click="vm.showDetail(p.description, p.labl)">
+          
+        </marker>
+
+      <info-window id="foo-iw">
+        <div ng-non-bindable="" class="menu-info" style="color:black;">
+         
+              <h4 class="control-sidebar-subheading">{*vm.shop.title*} </h4>
+              <span id="status" style="top: 30px !important;">
+                <i class="fa fa fa-certificate" style="color: #D4AF37;" aria-hidden="true" ng-show="vm.shop.task_status=='verified'"></i>
+                <i class="fa fa-check-circle-o" aria-hidden="true" ng-show="vm.shop.task_status=='completed'"></i>
+                <i class="fa fa-hourglass"  aria-hidden="true" ng-show="vm.shop.task_status=='unassigned'"></i>
+                <i class="fa fa-sign-language" aria-hidden="true" ng-show="vm.shop.task_status=='assigned'"></i>
+              </span>
+              <p ng-bind-html-unsafe="vm.shop.description | noHTML | newlines"></p>
+              <p>{*vm.shop.assigned_user_name*}</p>
+              <p>{*vm.shop.schedule_date*}</p>
+              <p>{*vm.shop.total_comments*} Comment</p>
+              <span ng-show="vm.shop.task_status=='assigned'">
+                  <!-- <a href="#" ng-click="mark_as_completed(task_detail.id)">Mark as completed</a> -->
+                  <input type="checkbox" id="mark1" ng-click="mark_as_completed(vm.shop.id)">
+                  <label for="mark1" style="width: 100%">Mark as completed</label>
+              </span>
+
+              <span ng-show="vm.shop.task_status=='completed'">
+                  <input type="checkbox" id="veified1" ng-click="mark_as_verified(vm.shop.id)">
+                  <label for="veified1" style="width: 100%">Mark as verified</label>
+
+              </span>
+              <div class="chip">
+                {*vm.shop.task_status*}
+              </div>
+
+              <a class="modal-trigger" ng-hide="vm.shop.task_status=='verified'" href="#modal1" ng-click="edit_function($index+1, vm.shop)">Edit</a>
+              <a class="modal-trigger" href="#modal2" ng-click="comment_list($index+1,vm.shop)">more info</a>
+          </div>
+
+      </info-window>
+    </ng-map>
+    
+    <div class="left-nav-container" style="z-index: 11;padding: 0;overflow: scroll;">
+        <button class="back">BACK</button>
+
+        <h1 class="control-sidebar-heading" style="font-size: 26px;color: white;">Today's Task</h1>
+  
+            <input style="color: white"  ng-model="task_search_text" type="text" name="" placeholder="Please enter the task you want to search"> 
+        
+        <ul class="control-sidebar-menu">
+          <li ng-repeat="task_detail in tasks | filter : task_search_text" ng-class="{highlight: task_detail.title==vm.shop.title}" style="display: inline-block; width: 100%;">
+            <div class="menu-info" ng-click="vm.showDetail_ng(e, task_detail, $index+1)" id="task_list{*$index+1*}">
+              <h4 class="control-sidebar-subheading">{*task_detail.title*} </h4>
+              <span id="status">
+                <i class="fa fa fa-certificate" style="color: #D4AF37;" aria-hidden="true" ng-show="task_detail.task_status=='verified'"></i>
+                <i class="fa fa-check-circle-o" style="color:white;" aria-hidden="true" ng-show="task_detail.task_status=='completed'"></i>
+                <i class="fa fa-hourglass" style="color:white;" aria-hidden="true" ng-show="task_detail.task_status=='unassigned'"></i>
+                <i class="fa fa-sign-language" style="color:white;" aria-hidden="true" ng-show="task_detail.task_status=='assigned'"></i>
+              </span>
+              
+              <p ng-bind-html-unsafe="task_detail.description | noHTML | newlines"></p>
+              <p>{*task_detail.assigned_user_name*}</p>
+              <p>{*task_detail.schedule_date*}</p>
+            </div>
+            <div class="chip">
+                {*task_detail.task_status*}
+            </div>
+           <span ng-show="task_detail.task_status=='assigned'">
+              <!-- <a href="#" ng-click="mark_as_completed(task_detail.id)">Mark as completed</a> -->
+              <input type="checkbox" id="mark" ng-click="mark_as_completed(task_detail.id)">
+              <label for="mark" style="width: 100%">Mark as completed</label>
+          </span>
+
+          <span ng-show="task_detail.task_status=='completed'">
+              <input type="checkbox" id="veified" ng-click="mark_as_verified(task_detail.id)">
+              <label for="veified" style="width: 100%">Mark as verified</label>
+
+          </span>
+            <a class="modal-trigger" href="#modal1" ng-hide="task_detail.task_status=='verified'" style="float: left;" ng-click="edit_function($index+1, task_detail)">Edit</a>
+            <a class="modal-trigger" href="#modal2" style="float: left;" ng-click="comment_list($index+1,task_detail)">more info</a>
+          </li>
+        </ul>
+    </div>
+
+    <div id="modal2" class="modal modal-fixed-footer" style="background: rgb(255, 252, 252) !important;z-index: 3 !important; width: 80%;">
+      <div class="modal-header modal-footer" style="top:0 !important">
+        <div class="row">
+          <div class="col s12" style="box-shadow: 0px 0px 10px rgba(0,0,0,0.5);">
+            <ul class="tabs">
+              <li class="tab col s4"><a class="active" href="#taskdetails">Task Details</a></li>
+              <li class="tab col s4"><a href="#comments">Comments</a></li>
+              <li class="tab col s4"><a href="#auditlog">Audit Log</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="modal-content" style="padding: 0px;margin-top: 48px;">
+        <div class="row">
+          <div id="taskdetails" class="col s12">
+            <div class="taskdetailwrap">
+              <ul>
+                <li class="task">
+                  <div class="row">
+                    <div class="col s12">
+                      <h5 class="taskname">{*vm.shop.title*} : <strong>{*vm.shop.task_status*}</strong></h5>
+                      <p class="taskdesc" ng-bind-html-unsafe="vm.shop.description | noHTML | newlines"></p>
+                      <p>{*vm.shop.schedule_date*}</p>
+                      <h6>Assigned to <strong>{*vm.shop.assigned_user_name*}</strong></h6>
+                      
+                      <span ng-show="vm.shop.task_status=='assigned'">
+                          <!-- <a href="#" ng-click="mark_as_completed(task_detail.id)">Mark as completed</a> -->
+                          <input type="checkbox" id="mark2" ng-click="mark_as_completed(vm.shop.id)">
+                          <label for="mark2" style="width: 100%">Mark as completed</label>
+                      </span>
+                      <span ng-show="vm.shop.task_status=='completed'">
+                          <input type="checkbox" id="veified3" ng-click="mark_as_verified(vm.shop.id)">
+                          <label for="veified3" style="width: 100%">Mark as verified</label>
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div id="comments" class="col s12">
+            <div class="row" style="min-height: 75px;">
+              <div class="col s12" style="position: relative;">
+                <form action="" class="addcomment">
+                   <div class="row">
+                        <div class="col s10" ng-show="comment_add==1">
+                          <div class="input-field col s12" style="padding: 0;">
+                            <textarea id="textarea1" class="materialize-textarea" ng-model="comment_description"></textarea>
+                            <label for="textarea1">Textarea</label>
+                          </div>
+                          <div class="file-field input-field" style="clear: both;">
+                            <div class="btn">
+                              <span>File</span>
+                              <input type="file" id= "filed" class="file-path validate" ngf-select ng-model="pic_file" name="file" onchange="angular.element(this).scope().readURL(this);" ngf-accept="'image/*'" ngf-min-height="200" ngf-model-invalid="errorFiles" ngf-min-width="320" multiple>
+                            </div>
+                            <div class="file-path-wrapper">
+                              <div class="file-path-wrapper">
+                                <input class="file-path validate" type="text" >
+                              </div>
+                            </div>
+                          </div>
+                      
+                          <a class="waves-effect waves-light btn" ng-click="comment()">Comment</a>
+                          <a class="waves-effect waves-light btn" style="background:grey" href="#" ng-click="cancel()">Cancel</a>
+                        </div>
+                      <div class="col s2" style="float: right;" ng-show="vm.shop.task_status!='verified'">
+                        <a class="btn-floating btn-large waves-effect waves-light red" ng-click="comment_add=1">+</a>
+                      </div>
+                    </div>
+                </form>
+              </div>
+            </div>
+            <div class="col s12 m12">
+                <div class="card horizontal" style="border: 1px solid #ababad;" ng-repeat="comments in comments_list">
+                  <div class="card-image">
+                    <a href="/static/image/{*comments.image_id*}" target="_blank">
+                      <img src="/static/image/{*comments.image_id*}" ng-show="comments.image_id!=''">
+                    </a>
+                  </div>
+                  <div class="card-stacked">
+                    <div class="card-content">
+                      <p>{*comments.comment_text*}</p>
+                    </div>
+                    <div class="card-action">
+                      By <a href="#">{*comments.comment_by_name*}</a>
+                    </div>
+                  </div>
+                </div>
+                <div ng-hide="comments_list.length>0" style="text-align: center;">
+                    No Comments yet!
+                </div>
+            </div>
+          </div>
+          <div id="auditlog" class="col s12">
+            <!-- <ul>
+              <li class="loglist">
+                <p class="log">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Expedita, itaque.</p>
+              <p class="timestamp">14:00, 25-10-2017</p>
+              </li>
+              <li class="loglist">
+                <p class="log">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Expedita, itaque. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eligendi, quos?</p>
+              <p class="timestamp">14:00, 25-10-2017</p>
+              </li>
+              <li class="loglist">
+                <p class="log">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Expedita, itaque.</p>
+              <p class="timestamp">14:00, 25-10-2017</p>
+              </li>
+              <li class="loglist">
+                <p class="log">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Expedita, itaque.</p>
+              <p class="timestamp">14:00, 25-10-2017</p>
+              </li>
+              <li class="loglist">
+                <p class="log">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Expedita, itaque.</p>
+              <p class="timestamp">14:00, 25-10-2017</p>
+              </li>
+            </ul> -->
+            <div>
+              Logs Pending.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div ng-controller="AddTaskController as vm1" id="add_task">
+    <a class="btn-floating waves-effect waves-light modal-trigger red modal1" href="#modal1" ng-click="open_modal()" style="bottom: 10%; left:1%; position: absolute;z-index: 1111;"><i class="material-icons">add</i></a>
+    <div id="modal1" class="modal" style="background: rgb(255, 252, 252) !important;z-index: 3 !important;">
+      <div class="modal-content">
+            <div class="container">
+              <div class="row">
+                <h4>Add Task</h4>
+                <form name="myForm" novalidate>
+                  <div class="input-field col s12" >
+                    <input id="input_text" type="text" name="title" ng-model="title" required>
+                    <label for="input_text">Title</label>
+                    <span style="color:red" ng-show="myForm.title.$dirty && myForm.title.$invalid">
+                      <span ng-show="myForm.title.$error.required">Title is required.</span>
+                    </span>
+                  </div>
+
+                  <div class="row">
+                    <div class="row col s12">
+                      <div class="input-field col s12">
+                        <textarea id="textarea" class="materialize-textarea" ng-model="description"  required></textarea>
+                        <label for="textarea">Description</label>
+                        <span style="color:red" ng-show="myForm.description.$dirty && myForm.description.$invalid">
+                          <span ng-show="myForm.description.$error.required">Description is required.</span>
+                        </span>
+
+                      </div>
+                    </div>
+                  </div>
+                  <div class="input-field col s12">
+                    <label>Schedule Date</label>
+                    <input type="text" class="datepicker" name="schedule_date" ng-model="schedule_date" required>
+                    <span style="color:red" ng-show="myForm.description.$dirty && myForm.description.$invalid">
+                          <span ng-show="myForm.description.$error.required">Schedule Date is required.</span>
+                        </span>
+                    </span>
+                  </div>
+
+                  <div class="input-field col s12">
+                    <label style="position: relative;left: 0;padding-bottom: 22px;display: inline-block;" for="city">Assigned to</label>
+                      <select class="form-control" select2="" name="city" data-ng-model="engineer" ng-options="c.id as c.name for c in engineer_list">
+                        <option value="">Select engineer</option>
+                      </select>
+                    <span style="color:red" ng-show="engineer == -1">
+                        <span ng-show="engineer == -1">Engineer is required.</span>
+                    </span>
+                  </div>
+                  
+                  <div class="input-field col s12">
+                     <select ng-model="vm1.types" class="form-control">
+                        <option value="['geocode']">Geodode</option>
+                        <option value="['establishment']">Establishment</option>
+                        <option value="['address']">Address</option>
+                      </select><br/>
+
+                      Enter an address: <br/>
+                        <input places-auto-complete size=80
+                        ng-model="vm1.address"
+                        types="{*vm1.types*}"
+                        on-place-changed="vm1.placeChanged()" /> <br/>
+                        <ng-map id="add_task" on-click="vm1.addMarker()" center="{*center_latitude*}, {*center_longitude*}">
+                          <marker ng-repeat="marker in vm1.markers" position="{*marker.pos*}" draggable="true"></marker>
+                        </ng-map>
+                  </div>
+                  
+                  <div class="input-field col s12">
+                    <button class="btn waves-effect waves-light" type="text" name="action" ng-click="task_create()" ng-disabled="myForm.$invalid">Save
+                      <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </form>
+              </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script src="https://maps.google.com/maps/api/js?key=AIzaSyAlMQrWo9Pmiz0hM5b9ZPkAdG6QVN2xzQM&libraries=placeses,visualization,drawing,geometry,places"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script> 
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.4/js/select2.min.js"></script>
+<script src="https://code.angularjs.org/1.3.15/angular.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js"></script>
+<!-- Angular Material Library -->
+<script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+
+<!-- Your application bootstrap  -->
+<script src="https://rawgit.com/allenhwkim/angularjs-google-maps/master/build/scripts/ng-map.js"></script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.13/ng-file-upload.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.13/ng-file-upload-shim.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-cookies.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+<script src="static/js/tasks_functions.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.0.3/angular-sanitize.js"></script>
+
+
+
+<style type="text/css">
+  .select2{
+    width: 100% !important;
+  }
+</style>
+<script>
+  $(document).ready(function(){
+  // the "href" attribute of the modal trigger must specify the modal ID that wants to be triggered
+  $('.modal').modal({complete: function() {
+    var element = angular.element("#add_task");
+    var controller = element.controller();
+    var $scope = element.scope();
+
+     //as this happends outside of angular you probably have to notify angular of the change by wrapping your function call in $apply
+     $scope.$apply(function(){
+      $scope.title         = ""
+      $scope.description   = ""
+      $scope.engineer      = ""
+      $scope.markers           = [];
+      $scope.task_id       = 0;
+      $scope.address          = ""
+      $(".highlight").removeClass("highlight");
+      angular.element('.datepicker').val('')
+     });
+  }});
+  
+  //$("select").select2();
+
+  $('.datepicker').pickadate({
+    selectMonths: true, // Creates a dropdown to control month
+    selectYears: 15, // Creates a dropdown of 15 years to control year,
+    today: 'Today',
+    clear: 'Clear',
+    close: 'Ok',
+    min: -1,
+    closeOnSelect: false // Close upon selecting a date,
+
+  });
+
+  angular.element(".modal-overlay").trigger('click');
+  
+
+  //$('select').material_select();
+
+  $('.timepicker').pickatime({
+    default: 'now', // Set default time: 'now', '1:30AM', '16:30'
+    fromnow: 0,       // set default time to * milliseconds from now (using with default = 'now')
+    twelvehour: false, // Use AM/PM or 24-hour format
+    donetext: 'OK', // text for done-button
+    cleartext: 'Clear', // text for clear-button
+    canceltext: 'Cancel', // Text for cancel-button
+    autoclose: false, // automatic close timepicker
+    ampmclickable: true, // make AM PM clickable
+    aftershow: function(){} //Function for after opening timepicker
+  });
+
+  var select2_backup = [];
+  
+});
+
+
+var app = app || angular.module('myApp', ['ngMap','ngCookies', 'ngFileUpload', 'ngMaterial', 'ngSanitize']);
+
+app.config(['$interpolateProvider', function($interpolateProvider) {
+  $interpolateProvider.startSymbol('{*');
+  $interpolateProvider.endSymbol('*}');
+}]);
+
+
+
+
+
+app.directive("select2", function($timeout, $parse) {
+  return {
+    restrict: 'AC',
+    require: 'ngModel',
+    link: function(scope, element, attrs) {
+      console.log(attrs);
+      $timeout(function() {
+        console.log(element)
+        element.select2();
+        element.select2Initialized = true;
+      });
+
+      var refreshSelect = function() {
+        if (!element.select2Initialized) return;
+        $timeout(function() {
+          element.trigger('change');
+        });
+      };
+      
+      var recreateSelect = function () {
+        if (!element.select2Initialized) return;
+        $timeout(function() {
+          element.select2('destroy');
+          element.select2();
+        });
+      };
+
+      scope.$watch(attrs.ngModel, refreshSelect);
+
+      if (attrs.ngOptions) {
+        var list = attrs.ngOptions.match(/ in ([^ ]*)/)[1];
+        // watch for option list change
+        scope.$watch(list, recreateSelect);
+      }
+
+      if (attrs.ngDisabled) {
+        scope.$watch(attrs.ngDisabled, refreshSelect);
+      }
+    }
+  };
+});
+
+app.filter('newlines', function () {
+    return function(text) {
+        return text.replace(/\n/g, ' ');
+    }
+})
+.filter('noHTML', function () {
+    return function(text) {
+        return text
+                .replace(/&/g, '&amp;')
+                .replace(/>/g, '&gt;')
+                .replace(/</g, '&lt;');
+    }
+});
+
+app.controller('MyCtrl', function(NgMap, Upload, $scope, $q, $rootScope, $timeout, $scope, $http, $cookies) {
+
+  var vm = this;
+  $scope.url = "";
+  var user_id = $cookies.user_id
+
+  $rootScope.$on("refresh_task_list", function(){
+      $scope.get_tasks();
+      vm.map.hideInfoWindow('foo-iw');
+      $(".left-nav-container").addClass("activated");
+  });
+  
+  $scope.readURL = function (input) {
+    $scope.url = input.files;
+    if (input.files) {
+      for(i=0;i<input.files.length;i++)
+      {
+        var reader = new FileReader();
+        $scope.imageUploaded = 1;
+        reader.onload = function (e) {
+          $scope.url.$ngfDataUrl = e.target.result ;
+        };
+
+        reader.readAsDataURL(input.files[i]);
+      }
+    }
+  }
+
+
+  $scope.upload = function (file) {
+    Upload.upload({
+      url:"/upload/image",
+      method: 'POST',
+      data:{file:file}
+    }).then(function (resp) { //upload function returns a promise
+        $scope.add_comment(resp.data.picname);
+        
+        //$scope.add_comment();
+      })
+    };
+
+  NgMap.getMap({id:"task_map"}).then(function(map) {
+    vm.map = map;
+    if(map.getZoom() > $scope.maxZoomForSinglePOI){
+       map.setZoom($scope.maxZoomForSinglePOI);
+    }
+  });
+
+  $scope.comment_add = -1;
+  $scope.center_latitude = 41;
+  $scope.center_longitude = -87;
+  $scope.add_address = 1;
+  $scope.add_company = -1;
+  $scope.add_address_new = -1;
+  $scope.add_new_company = -1;
+  $scope.add_contact = -1;
+  $scope.company = "";
+  vm.positions =[];
+  $scope.comments_list = []
+
+  $scope.comment = function(){
+
+    if($scope.url == "")
+      $scope.add_comment('')
+    else
+      $scope.upload($scope.url);  
+  }
+
+  $scope.cancel = function(){
+    $scope.comment_add = -1;
+    $scope.comment_description = "";
+  }
+  vm.showDetail = function(e, shop, id) {
+    vm.shop = shop;
+    vm.map.showInfoWindow('foo-iw', id);
+    $scope.center_latitude = shop.lattitude;
+    $scope.center_longitude = shop.longitude;
+  };
+
+  $scope.maxZoomForSinglePOI = 10;
+
+  vm.showDetail_ng = function(e, shop, id) {
+    id = 'T'+id;
+    vm.shop = shop;
+    vm.map.showInfoWindow('foo-iw', id);
+    $scope.center_latitude = shop.lattitude;
+    $scope.center_longitude = shop.longitude;
+  };
+
+  $http({
+      method: "POST",
+      url: "/task/list",
+      data: {"engineer_id":0,"offset":0}
+        }).then(function successCallback(response) {
+            $scope.tasks = response.data.tasks
+            
+            for(var i in $scope.tasks){
+              $scope.positions_array = {}
+              $scope.positions_array['pos'] = []
+              $scope.positions_array['pos'][0] = $scope.tasks[i]['lattitude']
+              $scope.positions_array['pos'][1] = $scope.tasks[i]['longitude']
+              $scope.positions_array['labl'] = "T"+(parseInt(i)+1).toString();
+              $scope.positions_array['description'] = $scope.tasks[i]
+
+              vm.positions.push($scope.positions_array)
+            }
+          }, function errorCallback(response) {
+          ////console.log('fail with status '+response);
+      });
+  
+  
+  $scope.mark_as_completed = function(task_id){
+      $http({
+          method: "POST",
+          url: "/task/update_status",
+          data : {"task_id":task_id, "task_status":"completed"}
+            }).then(function successCallback(response) {
+                $scope.get_tasks();
+              }, function errorCallback(response) {
+              ////console.log('fail with status '+response);
+          });
+    
+  }
+
+  $scope.mark_as_verified = function(task_id){
+      $http({
+          method: "POST",
+          url: "/task/update_status",
+          data : {"task_id":task_id, "task_status":"verified"}
+            }).then(function successCallback(response) {
+                $scope.get_tasks();
+              }, function errorCallback(response) {
+              ////console.log('fail with status '+response);
+          });
+    
+  }
+
+  $scope.edit_function =function(index, taskDetail){
+    
+    $(".left-nav-container").removeClass("activated");
+    id = 'T'+index;
+    vm.shop = taskDetail;
+    $scope.center_latitude = taskDetail.lattitude;
+    $scope.center_longitude = taskDetail.longitude;
+    $scope.title = vm.shop.title;
+    $scope.description = vm.shop.description;
+    $rootScope.$emit("edit", {taskDetail});
+
+    $('.modal-overlay').click(function(){
+        $scope.$apply( function() {
+            $scope.title         = ""
+            $scope.description   = ""
+            $scope.engineer      = ""
+            vm1.markers          = [];
+            $scope.task_id       = 0;
+            vm1.address          = ""
+            $(".highlight").removeClass("highlight");
+            angular.element('.datepicker').val('')
+        });
+    });
+
+  }
+  $scope.add_comment = function(filename){
+    $scope.comment_json = {}
+    $scope.comment_json['comment_text']       = $scope.comment_description
+    $scope.comment_json['image_id']           = filename
+    $scope.comment_json['task_id']            = vm.shop.id
+    $scope.comment_json['comment_by_id']      = user_id
+    $scope.comment_json['comment_by_name']    = ""
+    $scope.comment_json['comment_id']         = 0
+
+
+
+    $http({
+        method: "POST",
+        url: "/comment/add/edit",
+        data : $scope.comment_json
+          }).then(function successCallback(response) {
+              $scope.comment_list()
+              $scope.url = ""
+              $scope.comment_description = ""
+              $scope.comment_add=-1
+            }, function errorCallback(response) {
+            ////console.log('fail with status '+response);
+    });
+
+  }
+  
+  $scope.comment_list = function(index, taskDetail){
+    if(taskDetail !=undefined){
+      $(".left-nav-container").removeClass("activated");
+      id = 'T'+index;
+      vm.shop = taskDetail;
+    }
+      
+    $http({
+        method: "POST",
+        url: "/comment/list",
+        data : {"offset": 0, "task_id": vm.shop.id}
+          }).then(function successCallback(response) {
+
+              $scope.comments_list = response.data.comment_list
+            }, function errorCallback(response) {
+            ////console.log('fail with status '+response);
+        });
+  }
+  $scope.get_tasks = function(){
+    console.log("inside get tasks")
+    $http({
+      method: "POST",
+      url: "/task/list",
+      data: {"engineer_id":0,"offset":0}
+        }).then(function successCallback(response) {
+            $scope.tasks = response.data.tasks
+            
+            for(var i in $scope.tasks){
+              $scope.positions_array = {}
+              $scope.positions_array['pos'] = []
+              $scope.positions_array['pos'][0] = $scope.tasks[i]['lattitude']
+              $scope.positions_array['pos'][1] = $scope.tasks[i]['longitude']
+              $scope.positions_array['labl'] = "T"+(parseInt(i)+1).toString();
+              $scope.positions_array['description'] = $scope.tasks[i]
+
+              vm.positions.push($scope.positions_array)
+            }
+          }, function errorCallback(response) {
+          ////console.log('fail with status '+response);
+      });
+    }
+  
+});
+
+app.controller('AddTaskController', function(NgMap, $rootScope, $scope, $q, $timeout, $scope, $http, $window, $cookies, $cookieStore) {
+
+  console.log($cookies)
+  var vm1 = this;
+  $scope.task_id = 0;
+
+  var user_id = $cookies.user_id
+
+  $scope.maxZoomForSinglePOI = 10;
+
+  vm1.types = "['establishment']";
+  vm1.markers = [];
+  vm1.shop = "";
+  $scope.center_latitude = 41;
+  $scope.center_longitude = -87;
+
+  vm1.placeChanged = function() {
+    vm1.place = this.getPlace();
+    // center_latitude = vm1.place.geometry.location.lat()
+    // center_longitude = vm1.place.geometry.location.lng()
+    
+    vm1.map.setCenter(vm1.place.geometry.location);
+    vm1.markers =[
+      {pos:[vm1.place.geometry.location.lat(), vm1.place.geometry.location.lng()]},
+    ];
+    
+  }
+
+
+  $rootScope.$on("edit", function(e,taskdetail){
+      //vm1.shop = taskdetail
+      $scope.task_id       = taskdetail.taskDetail.id
+      $scope.title         = taskdetail.taskDetail.title
+      $scope.description   = taskdetail.taskDetail.description
+      $scope.engineer      = taskdetail.taskDetail.assigned_user_id
+      $scope.schedule_date = taskdetail.taskDetail.schedule_date
+      angular.element('.datepicker').val($scope.schedule_date)
+      vm1.address          = "" 
+      vm1.markers = []
+
+      vm1.markers =[
+        {pos:[taskdetail.taskDetail.lattitude, taskdetail.taskDetail.longitude]},
+      ];
+      $timeout(function() {
+        $window.dispatchEvent(new Event("resize"));
+        $scope.center_latitude = taskdetail.taskDetail.lattitude;
+        $scope.center_longitude = taskdetail.taskDetail.longitude;
+
+      }, 100);
+  });
+
+
+    
+
+  NgMap.getMap({id:"add_task"}).then(function(map) {
+    vm1.map = map;
+    if(map.getZoom() > $scope.maxZoomForSinglePOI){
+       map.setZoom($scope.maxZoomForSinglePOI);
+    }
+  });
+  
+  
+  $scope.add_address = 1;
+  $scope.add_company = -1;
+  $scope.add_address_new = -1;
+  $scope.add_new_company = -1;
+  $scope.add_contact = -1;
+  $scope.company = "";
+  $scope.step=1;
+  
+
+  vm1.addMarker = function(event) {
+    var ll = event.latLng;
+    vm1.markers =[
+      {pos:[ll.lat(), ll.lng()]},
+    ];
+  }
+
+  vm1.positions =[
+      {pos:[40.71, -74.21]},
+      
+  ];
+
+
+
+  $scope.task_create = function(){
+
+    if(vm1.markers[0] != undefined){
+      $scope.input_json = {}
+      $scope.input_json['task_id']          =    $scope.task_id;
+      $scope.input_json['title']            =    $scope.title
+      $scope.input_json['description']      =    $scope.description
+      $scope.input_json['assigned_user_id'] =    $scope.engineer
+      $scope.input_json['schedule_date']    =    $scope.schedule_date
+      $scope.input_json['lattitude']        =    vm1.markers[0]['pos'][0];
+      $scope.input_json['longitude']        =    vm1.markers[0]['pos'][1];
+      $scope.tasks  = []
+
+      $http({
+        method: "POST",
+        url: "/task/add/edit",
+        data : $scope.input_json
+          }).then(function successCallback(response) {
+              $scope.title         = ""
+              $scope.description   = ""
+              $scope.engineer      = ""
+              vm1.markers          = [];
+              $scope.task_id       = 0;
+              vm1.address          = ""
+              $(".highlight").removeClass("highlight");
+              angular.element('.datepicker').val('')
+              $rootScope.$emit("refresh_task_list", {});
+              alert("success");
+              angular.element(".modal-overlay").trigger('click');
+            }, function errorCallback(response) {
+            ////console.log('fail with status '+response);
+      });
+    }
+    else{
+      alert("Please set address marker")
+    }
+  }
+
+
+
+  $scope.engineer_list = []
+
+  $http({
+        method: "POST",
+        url: "/engineer/list",
+        data : {"offset": 0}
+          }).then(function successCallback(response) {
+              $scope.engineer_list = response.data.engineers
+            }, function errorCallback(response) {
+            ////console.log('fail with status '+response);
+        });
+  
+  
+  
+
+  $scope.open_modal = function(){
+    $timeout(function() {
+      $window.dispatchEvent(new Event("resize"));
+    }, 100);
+  }
+
+  
+
+});
+</script>
+<style type="text/css">
+  .menu-info{
+    width: 100% !important;
+    margin: 0 !important;
+    color: white;
+    position: relative;
+    padding: 9px;
+  }
+
+  .company_logo{
+    display: block;
+    border: 1px solid #aba7a7;
+    border-radius: 50%;
+    background: url(https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Infosys_logo.svg/1200px-Infosys_logo.svg.png);
+    height: 70px;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  li{
+    border-radius: 5px;
+    /*border: 3px solid #eaa302;*/
+  } 
+  .modal-overlay{
+    z-index: 1 !important;
+  }
+  .modal{
+    min-height: 400px;
+    z-index: 3 !important;
+  }
+  .suggestion{
+    top: 63px;
+    position:absolute;
+    z-index: 1111;
+    background: #f1eded;
+    width: 100%;
+    padding: 10px;
+    overflow: -webkit-paged-x;
+  }
+  .suggestion li{
+    padding: 10px;
+    display: inline-block;
+    width: 100%;
+    border-bottom: 1px solid #d2d0d0;
+    position: relative;
+  }
+
+  .suggestion li a{
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    background: #53535f;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .suggestion li i{
+    color: white;
+    padding-top: 8px;
+    text-align: center;
+    display: block;
+  }
+
+  .highlight{
+    border: 3px solid #eaa302;
+  }
+
+  .company_name{
+    font-size: 22px !important;
+    padding-top: 19px;
+    display: block;"
+  }
+  h4{
+    font-size: 18px !important;
+  }
+  .online{
+    width: 10px;
+    height: 10px;
+    background: #00d200;
+    position: absolute;
+    right: 4%;
+    border-radius: 50%;
+    top: 9%;
+  }
+  .ended{
+    width: 10px;
+    height: 10px;
+    background: #f44437;
+    position: absolute;
+    right: 4%;
+    border-radius: 50%;
+    top: 9%;
+  }
+  
+</style>
+</html>

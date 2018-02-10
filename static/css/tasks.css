@@ -1,0 +1,58 @@
+body {
+    overflow:hidden
+}
+#map-container {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    background: url(https://cdn.dribbble.com/users/91700/screenshots/3038974/loader.gif);
+    background-repeat: no-repeat;
+    background-position: center;
+}
+.right-nav-container {
+    position:absolute;
+    top:0;
+    bottom:0;
+    right:-300px;
+    height:100vh;
+    background:#282828;
+    width:300px;
+    transition:0.2s linear
+}
+.left-nav-container {
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:-300px;
+    height:100vh;
+    background:#282828;
+    width:300px;
+    transition:0.2s linear
+}
+.right-nav-container.activated {
+    right:0;
+}
+.left-nav-container.activated {
+    left:0;
+}
+.left-nav-container ul,
+.right-nav-container ul {
+    margin:0;
+}
+.left-nav-container ul li,
+.right-nav-container ul li {
+    color:white;
+    line-height:3;   
+}
+.left-nav-container,
+.right-nav-container {
+    padding:25px;
+}
+button.back {
+    background: #43dbfe;
+    color: #282828;
+    padding: 10px;
+    border-radius:50px;
+    width: 100%;
+    border: none;
+}

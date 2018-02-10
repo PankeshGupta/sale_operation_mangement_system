@@ -1,0 +1,36 @@
+.error{
+	color: #FA787E;
+}
+
+ul.addressList {
+	list-style: none;
+	cursor:pointer;
+	padding: 0;
+}
+ul.addressList li {
+	transition:0.2s ease-in-out;
+}
+ul.addressList li:hover {
+	background:#f5f5f5;
+}
+ul.addressList img{
+	width:35px;
+}
+ul.addressList p{
+	margin:0;
+	line-height:35px;
+}
+ul.addressList li {
+	padding: 15px;
+    margin-bottom: 5px;
+    width: 25%;
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.25);
+    padding-left: 50px;
+}
+.custom_modal{
+	border: 1px solid #000;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 50px auto;
+}

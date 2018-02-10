@@ -1,0 +1,468 @@
+
+<div ng-controller="usersController">
+  <!-- Breadcrumbs-->
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item">
+      <a href="#">Dashboard</a>
+    </li>
+    <li class="breadcrumb-item active">Company</li>
+    <br>
+    <button class="btn btn-primary" ng-click="add_new_company()" >Add new company</button>
+  </ol>
+  <!-- adding new company form -->
+
+  <div class= "container custom_modal" ng-show="add_company">
+    <div class="header">
+      <button class="close" ng-click ="cancel_new_company()" > X </button>
+      <h4 class="modal-title">Add  company</h4>
+    </div>
+    <div class="modal-body">
+      <h3 ng-show="add_form_stage == 1"> STEP 1 : Add company details </h3>
+      <h3 ng-show="add_form_stage == 2">STEP 2 : Add company address</h3>
+      <h3 ng-show="add_form_stage == 3">STEP 3 : Add company contacts</h3>
+
+      <!-- adding companing name -->
+      <div ng-show="add_form_stage == 1">
+        <!-- ng-submit="addCompanyDetails(add_company_form.$valid)" -->
+        <form name = "company"  novalidate >
+          <div class="form-group">
+            <label for="inputName" class="col-form-label" >Company Name </label>
+            <input name="companyName" type="text" class="form-control" placeholder="SNA power pvt. ltd " ng-model="name" required = "" >
+          </div>
+          <button ng-disabled="!name" class="btn btn-primary" ng-click="add_form_next_stage()">Next</button>
+        </form>
+      </div>
+
+      <!-- /Adding multiple adresses -->
+      <div  ng-show="add_form_stage == 2">
+        <div>
+          <button style="float: right;" class="btn btn-primary" ng-click="add_new_address()" ng-hide="address_form_view"> Add New Address </button>
+          <hr>  
+        </div>
+        <ul class="addressList">
+
+          <li data-ng-repeat="a_address in address_choices track by $index">
+            <div class="row">
+              <div class="col-xs-5">
+                <p ng-bind="a_address.name ">Address Name </p>
+              </div>
+              <div class="col-xs-1" style="position: absolute;
+              top: -15px;
+              right: 25px;">
+              <img class="close" ng-click="edit_address(a_address)"" src="static/images/edit.png">
+            </div>
+            <div class="col-xs-1" style="position: absolute;top: -15px;right: -15px;">
+              <!-- see remove address method again  -->
+              <img class="close" src="static/images/close.png" ng-click="remove_address(address_choice)">
+            </div>
+          </div>
+        </li>
+      </ul>
+
+
+
+      <form name="address" novalidate ng-show="address_form_view">
+        <div class="row">
+          <div class="form-row form-group col-sm-6" ng-init="get_country_list()">  
+            <div class="col-sm-12">
+              <div class="form-group">
+                <label for="inputName" class="col-form-label">Name *</label>
+                <input ng-model="address_choice.name " type="text" class="form-control" id="inputName" placeholder="HeadOffice" required ="" name="address_name"> 
+              </div>
+            </div>
+
+            <div class="row" ng-show="address_choice.name">
+              <div class="col-sm-6">
+                <label for="inputCountry" class="col-form-label"> Country *</label>
+                <select ng-change="get_state_list(address_choice.country.countryid)" class="form-control" id="inputCountry" required="" ng-model="address_choice.country" ng-options=" country.country for country in country_list ">
+                  <option value="">Choose Country</option>
+                </select>
+                <br>
+              </div>
+              <div class="col-sm-6">
+                <label for="inputstate" class="col-form-label">State *</label>
+                <select ng-disabled="!address_choice.country" ng-change="get_city_list(address_choice.state.stateid)" class="form-control" id="inputState" required="" ng-model="address_choice.state" ng-options="state.state for state in state_list ">
+                  <option value="">Choose State</option>
+                </select>
+                <br/>
+              </div>
+              <div class="col-sm-6">
+                <label for="inputCity" class="col-form-label">City *</label>
+                <select ng-disabled="!address_choice.state" class="form-control" id="inputCity" ng-model="address_choice.city" ng-options="city.city for city in city_list ">
+                  <option value="">Choose City</option>
+                </select>
+                <br/>
+              </div>
+              <div class="col-sm-6">
+                <label for="inputCity" class="col-form-label">Zip *</label>
+                <input class="form-control" ng-model="address_choice.zip" type="text" placeholder="Zip Code" required="" name="zip" >
+                <div class="error">
+                  <div ng-show="address.zip.$dirty && address.zip.$invalid">
+                    <p ng-bind="address.zip.$error "></p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-12">
+                <div class="form-group">
+                  <label for="inputAddress" class="col-form-label">Address1 *</label>
+                  <input ng-model="address_choice.address1" type="text" class="form-control" id="inputAddress" placeholder="1234 Main St" required ="" name="address_choice.address1">
+                  <br/>  
+                </div>
+                <div class="form-group">
+                  <label for="inputAddress2" class="col-form-label">Address 2</label>
+                  <input ng-model="address_choice.address2" type="text" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" name="address_choice.address2">
+                  <div ng-show="form.address_choice.address2.$touched">
+                    <div style="color: red " ng-show="form.address_choice.city.$error.required">Address2 field is required</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <ng-map zoom="5" center="28.7041, 77.1025">
+              <marker position="{{long}},{{lat}}" draggable="true" on-dragend="dragEnd(this.position)" on-dragstart="dragstart()" on-drag="drag()" ></marker>
+            </ng-map>
+          </div>
+          <hr>  
+        </div>
+        <button class="btn btn-primary" ng-click="save_address(address_choice)" ng-disabled="!(address_choice.name && address_choice.country && address_choice.state && address_choice.city && address_choice.address1)"> Save </button>
+        <button class="btn btn-primary" ng-click="cancel_address()" >Cancel </button> 
+      </form>
+
+      <div class="modal-footer">
+        <button ng-click="add_form_previous_stage()" class="btn  btn-primary" > Back</button>
+        <button ng-click="add_form_next_stage()" class="btn  btn-primary" ng-disabled="!(address_choice.name && address_choice.country && address_choice.state && address_choice.city && address_choice.address1 && address_choices )"> Next</button>
+      </div>
+    </div>
+    <!-- /Adding multiple adresses -->
+
+    <!-- Adding Multiple contacts  -->
+    <div ng-show="add_form_stage==3">
+      <div>
+        <button style="float: right;" class="btn btn-primary" ng-click="show_contact_form() " ng-hide="contact_form_view"> Add New Contact </button>
+        <hr>  
+      </div>
+      <ul class="addressList">
+        <div class="row">
+          <li data-ng-repeat="a_contact in contact_choices track by $index ">
+            <div class="col-xs-5">
+              <p ng-bind="a_contact.name"></p>
+            </div>
+            <div class="col-xs-1">
+              <img class="close" ng-click="edit_contact(a_contact)"" src="static/images/edit.png">
+            </div>
+            <div class="col-xs-1">
+              <!-- see remove address method again  -->
+              <img class="close" src="static/images/close.png" ng-click="remove_contact()">
+            </div>
+          </li>
+        </div>
+      </ul>
+
+
+      <form name="contact" novalidate ng-show="contact_form_view">
+
+        <div class="form-group">
+          <label for="inputContactName" class="col-form-label">Name *</label>
+          <input id= "inputContactName" ng-model="contact_choice.name" type="text" class="form-control" placeholder="eg.pankesh" required  name="name">
+        </div>
+
+        <div class="form-group">
+          <label for="inputContactName" class="col-form-label">Designation * </label>
+          <input id= "inputContactName" ng-model="contact_choice.type" type="text" class="form-control" placeholder="eg.pankesh" required  name="Type">
+
+        </div>
+
+        <div class="form-group">
+          <label for="inputPhoneNumber" class="col-form-label">Phone Number *</label>
+          <input ng-model="contact_choice.phone_number" type="text" class="form-control" id="inputPhoneNumber" placeholder="+919988811061" required name="phone_number">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="inputContactEmail" class="col-form-label">Email *</label>
+            <input ng-model="contact_choice.email" type="email" class="form-control" id="inputContactEmail" required name="email" >
+          </div>
+        </div>
+        <button class="btn btn-primary" ng-click="save_contact(contact_choice)"> save </button>
+        <button class="btn btn-primary" ng-click="cancel_contact()"> Cancel </button>
+      </form>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="add_form_previous_stage()"> Previous </button>
+        <input type="submit" value="Submit" name="" ng-click="save_details_to_db(company)" class="btn btn-primary">
+      </div>
+    </div>
+  </div>       
+  </div>  
+
+  <!-- /adding company form -->
+
+<!-- /edit company form -->
+
+  <div class= "container custom_modal" ng-show="edit_company">
+  <div class="modal-header">
+    <h4 class="modal-title">Add  company</h4>
+    <button class="close" ng-click ="cancel_edit_company()"> X </button>
+  </div>
+  <div class=" modal-body">
+    <h3 ng-show="add_form_stage == 1">STEP 1 : Edit company details </h3>
+    <h3 ng-show="add_form_stage == 2">STEP 2 : Edit company address</h3>
+    <h3 ng-show="add_form_stage == 3">STEP 3 : Edit company contacts</h3>
+
+    <!-- adding companing name -->
+    <div ng-show="add_form_stage == 1">
+      <!-- ng-submit="addCompanyDetails(add_company_form.$valid)" -->
+      <form name = "company"  novalidate >
+        <div class="form-group">
+          <label for="inputName" class="col-form-label" >Company Name </label>
+          <input name="companyName" type="text" class="form-control" placeholder="SNA power pvt. ltd " ng-model="name" required = "" >
+        </div>
+        
+      </form>
+      <div class="modal-footer">
+        <button ng-disabled="add_company_form.companyName.$invalid" class="btn btn-primary" ng-click="add_form_next_stage()">Next</button>  
+      </div>
+      
+    </div>
+
+    <!-- /Adding multiple adresses -->
+    <div  ng-show="add_form_stage == 2">
+      <div>
+        <button style="float: right;" class="btn btn-primary" ng-click="add_new_address()" ng-hide="address_form_view"> Add New Address </button>
+        <hr>  
+      </div>
+      <ul class="addressList">
+
+        <li data-ng-repeat="a_address in address_choices track by $index ">
+          <div class="row">
+            <div class="col-xs-5">
+              <p ng-bind="a_address.name ">Address Name </p>
+            </div>
+            <div class="col-xs-1" style="position: absolute;
+            top: -15px;
+            right: 25px;">
+            <img class="close" ng-click="edit_address(a_address)"" src="static/images/edit.png">
+          </div>
+          <div class="col-xs-1" style="position: absolute;top: -15px;right: -15px;">
+            <!-- see remove address method again  -->
+            <img class="close" src="static/images/close.png" ng-click="remove_address()">
+          </div>
+        </div>
+      </li>
+    </ul>
+
+
+
+    <form name="address" novalidate ng-show="address_form_view">
+      <div class="row">
+        <div class="form-row form-group col-sm-6" ng-init="get_country_list()">  
+          <div class="col-sm-12">
+            <div class="form-group">
+              <label for="inputName" class="col-form-label">Name *</label>
+              <input ng-model="address_choice.name " type="text" class="form-control" id="inputName" placeholder="HeadOffice" required ="" name="address_name"> 
+            </div>
+          </div>
+
+          <div class="row" ng-show="address_choice.name">
+            <div class="col-sm-6">
+              <label for="inputCountry" class="col-form-label"> Country *</label>
+              <select ng-change="get_state_list(address_choice.country.countryid)" class="form-control" id="inputCountry" required="" ng-model="address_choice.country" ng-options=" country.country for country in country_list ">
+                <option value="">Choose Country</option>
+              </select>
+              <br>
+            </div>
+            <div class="col-sm-6">
+              <label for="inputstate" class="col-form-label">State *</label>
+              <select ng-disabled="!address_choice.country" ng-change="get_city_list(address_choice.state.stateid)" class="form-control" id="inputState" required="" ng-model="address_choice.state" ng-options="state.state for state in state_list ">
+                <option value="">Choose State</option>
+              </select>
+              <br/>
+            </div>
+            <div class="col-sm-6">
+              <label for="inputCity" class="col-form-label">City *</label>
+              <select ng-disabled="!address_choice.state" class="form-control" id="inputCity" ng-model="address_choice.city" ng-options="city.city for city in city_list ">
+                <option value="">Choose City</option>
+              </select>
+              <br/>
+            </div>
+            <div class="col-sm-6">
+              <label for="inputCity" class="col-form-label">Zip *</label>
+              <input class="form-control" ng-model="address_choice.zip" type="text" placeholder="Zip Code" required="" name="zip" >
+              <div class="error">
+                <div ng-show="address.zip.$dirty && address.zip.$invalid">
+                  <p ng-bind="address.zip.$error "></p>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-12">
+              <div class="form-group">
+                <label for="inputAddress" class="col-form-label">Address1 *</label>
+                <input ng-model="address_choice.address1" type="text" class="form-control" id="inputAddress" placeholder="1234 Main St" required ="" name="address_choice.address1">
+                <br/>  
+              </div>
+              <div class="form-group">
+                <label for="inputAddress2" class="col-form-label">Address 2</label>
+                <input ng-model="address_choice.address2" type="text" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" name="address_choice.address2">
+                <div ng-show="form.address_choice.address2.$touched">
+                  <div style="color: red " ng-show="form.address_choice.city.$error.required">Address2 field is required</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <ng-map zoom="5" center="28.7041, 77.1025">
+            <marker position="{{long}},{{lat}}" draggable="true" on-dragend="dragEnd(this.position)" on-dragstart="dragstart()" on-drag="drag()" ></marker>
+          </ng-map>
+        </div>
+        <hr>
+      </div>
+      <button class="btn btn-primary" ng-click="save_address(address_choice)" ng-disabled="!(address_choice.name && address_choice.country && address_choice.state && address_choice.city && address_choice.address1)"> Save </button>
+      <button class="btn btn-primary" ng-click="cancel_address()">Cancel </button> 
+    </form>
+
+    <div class="modal-footer">
+      <button ng-click="add_form_previous_stage()" class="btn  btn-primary" > Back</button>
+      <button ng-click="add_form_next_stage()" class="btn  btn-primary" class="btn  btn-primary" > Next</button>
+      <!-- ng-disabled="!(address_choice.name && address_choice.country && address_choice.state && address_choice.city && address_choice.address1 && address_choices )" -->
+    </div>
+  </div>
+  <!-- /Adding multiple adresses -->
+
+  <!-- Adding Multiple contacts  -->
+  <div ng-show="add_form_stage==3">
+    <div>
+      <button style="float: right;" class="btn btn-primary" ng-click="show_contact_form() " ng-hide="contact_form_view"> Add New Contact </button>
+      <hr>  
+    </div>
+    <ul class="addressList">
+      <div class="row">
+        <li data-ng-repeat="a_contact in contact_choices track by $index ">
+          <div class="col-xs-5">
+            <p ng-bind="a_contact.name"></p>
+          </div>
+          <div class="col-xs-1">
+            <img class="close" ng-click="edit_contact(a_contact)"" src="static/images/edit.png">
+          </div>
+          <div class="col-xs-1">
+            <!-- see remove address method again  -->
+            <img class="close" src="static/images/close.png" ng-click="remove_contact()">
+          </div>
+        </li>
+      </div>
+    </ul>
+
+
+    <form name="contact" novalidate ng-show="contact_form_view">
+
+      <div class="form-group">
+        <label for="inputContactName" class="col-form-label">Name *</label>
+        <input id= "inputContactName" ng-model="contact_choice.name" type="text" class="form-control" placeholder="eg.pankesh" required  name="name">
+
+      </div>
+
+      <div class="form-group">
+        <label for="inputContactName" class="col-form-label">Designation <span class="error">*</span> </label>
+        <input id= "inputContactName" ng-model="contact_choice.type" type="text" class="form-control" placeholder="eg.pankesh" required  name="Type">
+      </div>
+
+      <div class="form-group">
+        <label for="inputPhoneNumber" class="col-form-label">Phone Number *</label>
+        <input ng-model="contact_choice.phone_number" type="text" class="form-control" id="inputPhoneNumber" placeholder="+919988811061" required name="phone_number">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="inputContactEmail" class="col-form-label">Email *</label>
+          <input ng-model="contact_choice.email" type="email" class="form-control" id="inputContactEmail" required name="email" >
+        </div>
+      </div>
+      <button class="btn btn-primary" ng-click="save_contact(contact_choice)"> save </button>
+      <button class="btn btn-primary" ng-click="cancel_contact()"> Cancel </button>
+    </form>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary" ng-click="add_form_previous_stage()"> Previous </button>
+      <input type="submit" value="Submit" name="" ng-click="edit_save_details_to_db()" class="btn btn-primary">
+    </div>
+  </div>
+  </div>       
+  </div>
+
+<!-- /edit company form -->
+
+
+
+
+
+<!-- Example DataTables Card-->
+  <div class="card mb-3" ng-show="company_list_view">
+  <div class="card-header">
+    <i class="fa fa-table"></i> Company Table
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <thead>
+
+          <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Contact</th>
+            <th>Audit log </th>
+            <th>Coneted</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Contact</th>
+            <th>Audit log </th>
+            <th>Coneted</th>
+            <th>Actions</th> 
+          </tr>
+        </tfoot>
+        <tbody>
+          <tr ng-repeat="company in company_listing">
+            <td ng-bind="company.name"></td>
+            <td>
+              <ul ng-repeat="address in company.addresses">
+                <li>Address <span ng-bind="address.address1"></span></li>
+              </ul>
+            </td>
+            <td ng-bind="company.contacts">
+              <ul ng-repeat="contact in company.contacts">
+                <li>Address <span ng-bind="contact.name"></span></li>
+              </ul>
+            </td>
+            <td>61</td>
+            <td>2011/04/25</td>
+            <td>
+              <button ng-click="edit_company_info(company)" > Edit</button>
+            </td>
+
+          </tr>
+          <tr>
+            <td>Tiger Nixon</td>
+            <td>System Architect</td>
+            <td>Edinburgh</td>
+            <td>61</td>
+            <td>2011/04/25</td>
+            <td>
+              <button> Edit</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
+  </div>
+<!-- /data-table card -->
+
+</div>

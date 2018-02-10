@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>SNA OMS v2 Engineer Management</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="http://snapower.net/assets/images/faviconsna.png" type="image/gif" sizes="16x16">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+	<!-- <base href="static/tasks/" target="_blank"> -->
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.4/css/select2.css">
+	<link rel="icon" href="http://snapower.net/assets/images/faviconsna.png" type="image/gif" sizes="16x16">
+
+
+	<link rel="stylesheet" href="static/tasks/css/style.css">
+</head>
+<body ng-app="myApp" ng-cloak >
+<div id="MainWrapper" ng-controller="MyCtrl as vm" ng-init="get_engineer_task_list()">
+	<header>
+			<span class="home" ng-click="back_to_home()"><a class="home"><img src="static/tasks/img/home.png" alt=""></a></span>
+		
+		<div class="tasklist">
+			<button class="button-collapse task-list" id="left" ng-click="activate_task()"><span class="left"><img src="static/tasks/img/task.png" alt=""></span>Task List</button>
+			<!-- ng-click="activate_task()" -->
+		</div>
+		
+		<button style="position: absolute;margin: 0;top: 50%;transform: translateY(-50%);right: 365px;padding: 10px 20px;background: #39536d;box-shadow: 0px 0px 10px rgba(0,0,0,0.25);color: white;" ng-click="show_activity_log()" class="button-collapse" id="right"><p style="margin:0;">Activity log</p></button>
+
+		<button style=" position: absolute; margin: 0; top: 50%; transform: translateY(-50%); right: 200px; padding: 10px 20px; background: #39536d; box-shadow: 0px 0px 10px rgba(0,0,0,0.25); color: white;" ng-click="engineer_list_all_select()" class="button-collapse" id="right"><p style="margin:0;">Engineer List</p></button>
+
+		<button style="position:absolute; margin:0; top: 50%; transform: translateY(-50%); right:-100%;" data-activates="slide-out-engineer" class="button-collapse" id="right_open"><p>n</p></button>
+
+		<div class="logo"><img src="static/tasks/img/logo.png" alt=""></div>
+		
+		<div class="user">
+			
+			<div class="menu_temp">
+				<button class="logout"> <a class="modal-trigger" href="#modal1">logout</a> </button>
+			</div>
+		</div>
+	
+
+	</header>
+	<!-- map starts here -->
+
+	<!-- <header>
+		<span class="home" ng-click="back_to_home()"><a class="home"><img src="static/tasks/img/home.png" alt=""></a></span>
+		<div class="tasklist">
+			<button class="button-collapse task-list" id="left" ng-click="activate_task()"><span class="left"><img src="static/tasks/img/task.png" alt=""></span>Task List</button>
+		</div>
+
+		 <a class='dropdown-button btn' href='#' data-activates='mainmenu'><i class="material-icons dp48">menu</i></a>
+
+		
+		<ul id='mainmenu' class='dropdown-content'>
+
+			<li><a href="#"><p>{*user_name*}</p></a></li>
+
+			<li>
+				<a href="#" ng-click="engineer_list_all_select()" class="button-collapse" id="right">Engineer List</a>
+			</li>
+
+			<li>
+				<a class="modal-trigger" href="#modal1">
+					<div class="menu_temp">
+						<button class="logout"> logout </button>
+					</div>
+				</a>
+			</li>
+		</ul>
+
+	</header> -->
+
+	<div id="modal1" class="modal">
+		<div class="modal-content" style="text-align: center;">
+			<h5>Are you sure tou want to logout ?</h5>
+		</div>
+		<div class="modal-footer">
+			<a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">NO</a>
+			<a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" ng-click="logout()">YES</a>
+		</div>
+	</div>
+
+
+
+	<ng-map zoom={*vm.zoom*} id="task_map" center="[{*center_latitude*},{*center_longitude*}]"  scrollwheel="true" style="width:100%; height: calc(100vh - 65px) !important;">
+
+
+			
+		<custom-marker ng-repeat="p in vm.positions"
+	        position="[{*p.pos[0]*}, {*p.pos[1]*}]" id='{*p.labl*}' on-click="vm.showDetail(p.description, p.labl, $index+1)" class="task">
+	        <div class="tasklocate {*p.description.task_status*}" ng-class="{pulse: current_selected_engineer == p.description.assigned_user_id}"><p class="">T{*$index+1*}</p></div>
+	      	
+
+	    </custom-marker>
+		
+		<custom-marker ng-repeat="p in vm.engineers"
+	        position="[{*p.pos[0]*}, {*p.pos[1]*}]" class="engineer" on-click="vm.non_assign_task_engineer_side_nav_map(p.description.id, p.description.name, $index, p.description, p.pos[0], p.pos[1])" id='E{*$index+1*}'>
+	        <div class="my1" >
+	    		<img style="max-width: 30px" src="static/tasks/img/standing-up-man.png">
+	    	</div>
+	    </custom-marker>
+
+		<info-window id="foo-iw">
+			<div id="card" ng-class="checkIfPast(vm.shop.schedule_date, vm.shop.task_status) ? 'assigned overdue' : vm.shop.task_status" class="button-collapse-engineer task_list{*$index+1*}" style="height: 210px;width: 398px;line-height: 2em;">
+					<div>
+					<span class="indicator" ng-if="vm.shop.task_status=='unassigned'"><img src="static/tasks/img/{*vm.shop.task_status*}.png"  alt="" ng-click="task_status_action(vm.shop, 'open')"></span>
+
+					<span class="indicator" ng-if="vm.shop.task_status!='unassigned'"><img src="static/tasks/img/assigned.png" alt="" ng-click="task_status_action(vm.shop, 'close')" role="button" tabindex="0" style="text-align: center;">
+					<div style="width: 100%;text-align: center;font-size: 0.6em;">{*vm.shop.assigned_user_name*}</div></span>
+
+					<span class="taskindex">T{* vm.shop.index*}</span>
+					<div class="taskheader">{*vm.shop.title*}</div>
+					<div class="taskid">{*vm.shop.id*}</div>
+					<div class="taskdesc">{* vm.shop.description *}</div>
+					<div class="taskschedule">Schedule on <span class="date">{*vm.shop.schedule_date *}</span></div>
+					<div class="taskschedule"><span class="date">{*vm.shop.total_comments *}</span><i> Comments</i></div>
+					<a href="#taskadd"  class="modal-trigger"><button class="edit" ng-click="edit_function($index+1, vm.shop)"><span class="left "><img src="static/tasks/img/edit.png" alt=""></span>Edit</button></a>
+					<a href="#task_details" class="modal-trigger"><button ng-click="comment_list($index+1,vm.shop, -1)" 
+						class="details"><span class="left"><img src="static/tasks/img/eye.png" alt=""></span>Details</button></a>
+					
+					<time class="timeago" am-time-ago="vm.shop.created_at"></time>
+					</div>
+				
+				</div>
+		</info-window>
+
+		<info-window id="engineer_list_window">
+			<li class="engineer-card" id="engineer_card{*$index*}" style="list-style: none;width: 300px;">
+				<div class="engineer-name">{* selected_engineer_detail.name *} <span style="font-size: 0.8em;"> ({* selected_engineer_detail.phone *}) </span> </div>
+				
+				<div class="row">
+					<div class="col s6"><div class="today-task"><p ng-show="formatted_date==''">Today's Tasks</p><p ng-show="formatted_date!=''" style="font-size: 12px;">{*formatted_date*} Tasks</p><span>{* selected_engineer_detail.tasks_info.todays_tasks *}/ {* selected_engineer_detail.tasks_info.todays_total_tasks *}</span></div></div>
+					<div class="col s6"><div class="total-task"><p>Total Tasks</p><span>{* selected_engineer_detail.tasks_info.total_tasks *}</span></div></div>
+				</div>
+				<p>Last ping : <time class="timeago" am-time-ago="selected_engineer_detail.location.created_at"></time></p>
+			</li>
+		</info-window>
+
+	</ng-map>
+	<!-- map ends here -->
+	
+  	<ul id="slide-out-engineer-list" class="side-nav right-aligned" style="height: 100vh;">
+  		
+  		<span class="cross" id="cross_list" ng-click="reset_engineer_selection();" style="position: absolute;width: 40px; right: 10px; top: 23px;cursor: pointer;">
+			<img src="static/tasks/img/delete.png" style="width: 20px;">
+		</span>
+
+		<div class="title">
+			<p class="search" style="float: left;padding: 20px;line-height: 1;" ng-click="show_filter_res()"><img src="static/tasks/img/calendar-white.png" alt="" style="width: 21px;cursor: pointer;"></p>
+
+			<p style="float: left;text-align: center;width: 58%;">Engineer's List</p></div>
+
+		<div class="chip" ng-show="current_selected_engineer!=''">{*current_selected_engineer_name*}</div>
+			
+		<a class="waves-effect waves-light" ng-show="current_selected_engineer!=''" ng-click="reset_engineer_selection()">Clear</a>
+
+
+		<div class="row" ng-show="show_filter">
+			<div class="search-wrapper col s12">
+				<input type="date" ng-model="engineer_schedule_date" placeholder="Select date" style="width: 90%;float:left;">
+			</div>
+			<a class="waves-effect waves-light btn" ng-click="get_engineer_task_list()">Filter</a>
+			<a class="waves-effect waves-light btn" style="background: gray;" ng-click="show_filter_res()">Close</a>
+
+		</div>
+
+		<div class="row">
+			<div class="search-wrapper col s12">
+				<input class="search" ng-model="engineer_search" placeholder="Search engineer"><span class="search" ><img src="img/search.png" alt=""></span>
+
+			</div>
+		</div>
+		<li class="engineer-card" id="engineer_card{*$index*}" ng-repeat="engineer in filtered_engineer_task_list = (engineer_task_list | orderBy:'location_status' | orderBy:'-location.created_at' | filter : engineer_search)" ng-click="non_assign_task_engineer_side_nav(engineer.id, engineer.name, $index, engineer, engineer.location.latitude, engineer.location.longitude)" style="cursor: pointer;">
+			<div class="engineer-name">{* engineer.name *} <span style="font-size: 0.8em;"> ({* engineer.phone *}) </span> </div>
+			
+			<div class="row">
+				<div class="col s6"><div class="today-task"><p ng-show="formatted_date==''">Today's Tasks</p><p ng-show="formatted_date!=''" style="font-size: 12px;">{*formatted_date*} Tasks</p><span>{* engineer.tasks_info.todays_tasks *}/ {* engineer.tasks_info.todays_total_tasks *}</span></div></div>
+				<div class="col s6"><div class="total-task"><p>Total Tasks</p><span>{* engineer.tasks_info.total_tasks *}</span></div></div>
+			</div>
+			<div ng-if="engineer.location_status">
+				<div ng-if="engineer.location_status == 'active' ">
+					
+					<p><strong style="color: green">Active</strong> | <time class="timeago" am-time-ago="engineer.location.created_at"></time></p>	
+				</div>
+				<div ng-if="engineer.location_status == 'inactive'">
+					
+					<p><strong style="color: red">Idle</strong> | <time class="timeago" am-time-ago="engineer.location.created_at"></time></p>	
+				</div>
+					
+			</div>
+			<div ng-hide="engineer.location.created_at">
+				<p>App not installed</p>
+			</div>
+				
+		</li>
+		<li class="engineer-card" ng-if="filtered_engineer_task_list.length == 0">
+			<p>NO engineers to show</p>			
+		</li>
+  	</ul>
+
+	<ul id="slide-out-engineer" class="side-nav right-aligned" style="height: 100vh;">
+  		<div class="title"><p>Choose an Engineer</p></div>
+		<p>{* schedule_date_selected *}</p>
+
+		<div class="row">
+			<div class="search-wrapper col s12">
+				<input class="search"  ng-model="engineer_search_choose" placeholder="Search engineer"><span class="search"<img src="img/search.png" alt=""></span>
+			</div>
+		</div>
+
+		<li class="engineer-card" ng-repeat="engineer in filtered_engineer_schedule_list = (engineer_schedule_list | filter : engineer_search_choose)" ng-click="assign_task_engineer_side_nav(engineer.id)">
+			<div class="engineer-name">{* engineer.name *}({* engineer.phone *})</div>
+			<div class="row">
+				<div class="col s6"><div class="today-task"><p>That day task</p><span>{* engineer.tasks_info.todays_tasks *} / {* engineer.tasks_info.todays_total_tasks *}</span></div></div>
+				<div class="col s6"><div class="total-task"><p>Total Tasks</p><span>{* engineer.tasks_info.total_tasks *}</span></div></div>
+				<div class="col s12"><button class="waves-effect btn button-collapse-engineer-task" data-activates="slide-out-engineer-task">Assign Task</button></div>
+			</div>		
+		</li>
+		<div ng-if="!(engineer_schedule_list)">
+			<h5>No engineers to show</h5>
+		</div>
+  	</ul>
+
+<!-- _________________ --> 
+
+<ul id="slide-out" class="side-nav" ng-init="date_range = 'today'">
+	<div class="nav-header" st>
+		<a href="javascript:void(0);" class="back" ng-click="activate_task()"><img src="static/tasks/img/back.png" alt=""></a>
+		<div ng-click="task_date_range()" style="cursor: pointer;">
+		<div>
+			<p ng-if="date_range == 'last_7'" > Last Week</p>
+			<p ng-if="date_range == 'last_30'" > Last Month</p>
+			<p ng-if="date_range == 'next_7'" > Next Week</p>
+			<p ng-if="date_range == 'next_30'" > Next Month</p>
+			<p ng-if="date_range == 'today'" > Today</p>
+			<p ng-if="date_range == 'custom' ">
+				{* start_date*} - {*end_date*}
+			</p>
+				
+		</div>	
+		
+		<a href="javascript:void(0)" class="date" ng-click="">
+			<img src="static/tasks/img/calender.png" alt="" >
+		</a>
+		</div>
+		
+	</div>
+	
+<!-- form for calender based filters -->
+	<div ng-show="date_range_selector" style="background: #e1e1e1; margin:10px; padding: 25px; position:relative;">
+		
+		<span style="text-align: center;"><h5><strong>FIlter Tasks</strong></h6></span>
+		 <div class="row" style="background: #e1e1e1" ng-init="custom_range_filter=false;">
+		 	<form name="query_form">
+		
+				<p><strong>Filter status</strong></p>
+
+				<div class="row">
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="all" ng-model="query.all" ng-click="query_status('all')"/>
+		  				<label for="all">All</label>
+					</div>
+					<div class="col s6">
+						<input type="checkbox" ng-model="query.completed" class="filled-in" id="completed_task" checked="checked" ng-click="query_status('completed')"/>
+		  				<label for="completed_task">Completed</label>
+					</div>
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="assigned_task" ng-model="query.assigned" checked="checked" ng-click="query_status('assigned')" />
+		 				<label for="assigned_task">Assigned</label>
+					</div>
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="verified_task" checked="checked" ng-model="query.verified" ng-click="query_status('verified')" />
+		  				<label for="verified_task">Verified</label>
+					</div>
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="unassigned_task" checked="checked" ng-model="query.unassigned" ng-click="query_status('unassigned')" />
+		  				<label for="unassigned_task">Unassigned</label>
+					</div>				
+				</div>
+				<span style="color:red" ng-if="range_status_error">
+			      		<span style="color: red">{* range_status_error *}</span>
+			    </span>
+
+				<p><strong>Filter Range</strong></p>
+
+					<div class="row">
+						
+						<div class="col s6">
+							<input type="radio" id="range0" name="range" value="today" ng-click="custom_range_filter=false; date_range = 'today';" class="with-gap" checked="checked" >
+							<label for="range0">Today</label>
+						</div>
+
+						<div class="col s6">
+							<input type="radio" id="range1" name="range" ng-model="date_range" value="last_7" ng-click="custom_range_filter=false;" class="with-gap">
+							<label for="range1">Last Week</label>
+						</div>
+						
+						<div class="col s6">
+							<input type="radio" id="range2" name="range" ng-model="date_range" value="last_30" ng-click="custom_range_filter=false;" class="with-gap">
+							<label for="range2">Last Month</label>
+						</div>
+						
+						<div class="col s6">
+							<input type="radio" id="range3" name="range" ng-model="date_range" value="next_7" ng-click="custom_range_filter=false;" class="with-gap">
+							<label for="range3">Next Week</label>
+						</div>
+						
+						<div class="col s6">
+							<input type="radio" id="range4" name="range" ng-model="date_range" value="next_30" ng-click="custom_range_filter=false;" class="with-gap">
+							<label for="range4">Next Month</label>
+						</div>
+
+						<div class="col s6">
+							<input type="radio" id="range5" name="range"  ng-model="date_range" value="custom" 
+							ng-click="custom_range_filter = true;">
+							<label for="range5">Custom</label>
+						</div>
+
+					</div>
+					<div ng-show="custom_range_filter">
+						<form>
+						<div class="row">
+							<div class="col s6">
+							  <label for="start_date">Start date</label>
+							  <input id="start_date" type="text" class="datepicker" ng-model="start_date">
+
+
+							</div>
+							<div class="col s6">
+							  <label for="end_date">End date</label>
+							  <input type="text" id="end_date"  class="datepicker" ng-model="end_date">
+
+							</div>
+						</div>
+						<span style="color:red" ng-if="range_date_error">
+			      			<span style="color: red">{* range_date_error *}</span>
+			    		</span>
+
+						</form>
+
+				  	    <a class="waves-effect waves-light btn right" ng-click="reset_date_range()">Reset</a>
+
+	    		    </div>
+	    		    <br>
+						<a class="waves-effect waves-light btn" ng-click="submit_query(query,query_date_range)">Filter</a>
+				</form>
+
+
+
+			<!-- <p> <strong> Date range</strong></p>
+		   	<br>
+		   		<div class="row">
+					<div class="col s6">
+						<input type="checkbox" ng-model="query_preset.last_30" class="filled-in" id="last_30" checked="checked" ng-click="query_preset.today = false; query_preset.last_7 = false;query_preset.next_7 = false;query_preset.next_30 = false;query_preset.recent = false;query_preset.custom = false;custom_range_filter = false;" />
+		  				<label for="last_30">Last 30days</label>
+					</div>
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="last_7" ng-model="query_preset.last_7" 
+						ng-click="query_preset.today = false;query_preset.last_30 = false;query_preset.next_7 = false;query_preset.next_30 = false;query_preset.recent = false;query_preset.custom = false;custom_range_filter = false;"
+						 />
+		 				<label for="last_7">Last 7days</label>
+					</div>
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="next_30" checked="checked" ng-model="query_preset.next_30" ng-click="query_preset.today = false;query_preset.last_7 = false;query_preset.last_30 = false;query_preset.next_7 = false;query_preset.recent = false;query_preset.custom = false;custom_range_filter = false;"/>
+		  				<label for="next_30">Next 30days</label>
+					</div>
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="next_7" checked="checked" ng-model="query_preset.next_7" ng-click="query_preset.today = false;query_preset.last_7 = false;query_preset.last_30 = false;query_preset.next_30 = false;query_preset.recent = false;query_preset.custom = false;custom_range_filter = false;" />
+		  				<label for="next_7">Next 7days</label>
+					</div>
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="recent" checked="checked" ng-model="query_preset.recent" ng-click="query_preset.today = false;query_preset.last_7 = false;query_preset.last_30 = false;query_preset.next_7 = false;query_preset.next_30 = false;query_preset.custom = false;custom_range_filter = false;" />
+		  				<label for="recent">Added recently</label>
+					</div>
+
+					<div class="col s6">
+						<input type="checkbox" class="filled-in" id="custom" checked="checked" ng-model="query_preset.custom" ng-click="query_preset.today = false;query_preset.last_7 = false;query_preset.last_30 = false;query_preset.next_7 = false;query_preset.next_30 = false;query_preset.recent = false; custom_range_filter = true;" />
+		  				<label for="custom">Custom</label>
+					</div>
+
+				</div>
+
+		    <div ng-show="custom_range_filter">
+				<form>
+					<div class="row">
+						<div class="col s6">
+						  <label for="start_date">Start date</label>
+						  <input id="start_date" type="text" class="datepicker" ng-model="start_date">
+
+
+						</div>
+						<div class="col s6">
+						  <label for="end_date">End date</label>
+						  <input type="text" id="end_date"  class="datepicker" ng-model="end_date">
+
+						</div>
+					</div>
+					<span style="color:red" ng-if="range_date_error">
+		      			<span style="color: red">{* range_date_error *}</span>
+		    		</span>
+
+				</form>
+
+			  	<a class="waves-effect waves-light btn" ng-click="reset_date_range()">Reset</a>
+    		</div> -->
+		  </div>      	
+	</div>
+
+	<div ng-show ="task_list_view" class="row" style="height: 90vh; max-height: 90vh; overflow-y: auto;margin:0;">
+		<div class="search-wrapper col s12">
+			<input class="search" ng-model = "task_search_text" placeholder="Type Task id, Title ,Engineer name" ng-change="reset_engineer_selection()"><span class="search"><img src="static/tasks/img/search.png" alt=""></span>
+		</div>
+		<div class="col s12" ng-show="task_list_header_view">
+			<ul class="tabs">
+				<li class="tab col s6"><a class="active" href="#todaytask">Today</a></li>
+				<li class="tab col s6" ng-click="action_bar_view=false"><a href="#overduetask">Overdue</a></li>
+			</ul>
+		</div>
+		<div id="todaytask" class="col s12">
+			<div id="card" ng-repeat="task_detail in filtered_today_tasks=(tasks | filter : task_search_text)" 
+			ng-class="checkIfPast(task_detail.schedule_date, task_detail.task_status) ? 'assigned overdue' : task_detail.task_status" class="button-collapse-engineer task_list{*$index+1*}" >
+				<div ng-click="vm.showDetail_ng($event, task_detail, $index+1)" id="task_list{*$index+1*}">
+				<span class="indicator" ng-if="task_detail.task_status=='unassigned'"><img src="static/tasks/img/{*task_detail.task_status*}.png"  alt="" ng-click="task_status_action(task_detail, 'open')"></span>
+
+				<span class="indicator" ng-if="task_detail.task_status!='unassigned'"><img src="static/tasks/img/{*task_detail.task_status*}.png" alt="" ng-click="task_status_action(task_detail, 'close')" role="button" tabindex="0" style="text-align: center;">
+				<div style="width: 100%;text-align: center;font-size: 0.6em;">{*task_detail.assigned_user_name*}</div></span>
+
+				<span class="notification" ng-show="task_detail.unread_comment!=0">{*task_detail.unread_comment*}</span>
+				<span class="taskindex">T{* $index+1 *} </span>
+				<div class="taskheader">{*task_detail.title*}</div>
+				<div class="taskid">{*task_detail.id*}</div>
+				<div class="taskdesc">{* task_detail.description *}</div>
+				<div class="taskschedule">Schedule on <span class="date">{*task_detail.schedule_date *}</span></div>
+				<div class="taskschedule"><span class="date">{*task_detail.total_comments *}</span><i> Comments</i></div>
+
+				<a href="#taskadd"  class="modal-trigger"><button class="edit" ng-click="edit_function($index+1, task_detail)"><span class="left "><img src="static/tasks/img/edit.png" alt=""></span>Edit</button></a>
+				<a href="#task_details" class="modal-trigger"><button ng-click="comment_list($index+1,task_detail, $index)" 
+					class="details"><span class="left"><img src="static/tasks/img/eye.png" alt=""></span>Details</button></a>
+				
+				<time class="timeago" am-time-ago="task_detail.created_at"></time>
+				
+				<div class="actionbar" ng-show="current_id == task_detail.id && action_bar_view" >
+					
+					<div class="row col s12" ng-if="task_detail.task_status == 'assigned' ">
+						<span class="close" ng-click="task_status_action(task_detail, 'close')"><img src="static/tasks/img/cross.png" alt=""></span>
+						
+						<!-- After karan sir's review the task can be marked as verified only after it has been marked as completed -->
+						<!-- <div class="col s6 verified"><a href="javascript:void(0)" ng-click="mark_as_verified(task_detail.id)" >Mark as verified</a></div> -->
+						<div class="col s6 incomplete" style="left: 50%;"><a href="javascript:void(0)" ng-click="task_status_action_status(task_detail)"> Reassign </a></div>
+
+						<div class="col s6 verified"><a href="javascript:void(0)" ng-click="mark_as_completed(task_detail.id)"> Completed </a></div>
+					</div>
+
+					<div class="row" ng-if="task_detail.task_status == 'completed' ">
+						<span class="close" ng-click="task_status_action(task_detail, 'close')"><img src="static/tasks/img/cross.png" alt=""></span>
+
+						<div class="col s6 incomplete" style="left: 0;"><a href="javascript:void(0)" ng-click="mark_as_assigned(task_detail.id)">Mark as incomplete</a></div>
+						<div class="col s6 verified" style="right: 0;"><a href="javascript:void(0)" ng-click="mark_as_verified(task_detail.id)" >Mark as verified</a></div>
+						
+					</div>
+
+					<div class="row" ng-if="task_detail.task_status == 'verified' ">
+						<span class="close" ng-click="task_status_action(task_detail, 'close')"><img src="static/tasks/img/cross.png" alt="" ng-click="action_bar_view = false "></span>
+						<p>The task has been marked as Verified </p>						
+					</div>
+
+					<div class="row" ng-if="task_detail.task_status == 'unassigned' ">
+						<span class="close" ng-click="task_status_action(task_detail, 'close')"><img src="static/tasks/img/cross.png" alt="" ng-click="action_bar_view = false "></span>
+						<p>Please assign an engineer</p>						
+					</div>
+				
+				</div>
+
+
+				</div>
+				
+			</div>
+			<div id="card" ng-if="(filtered_today_tasks.length == 0)" aria-hidden="false" class="" style="text-align: center;"><h5>No Tasks to show</h5></div>
+
+			
+			
+		</div>
+
+		<div id="overduetask" class="col s12">
+			<div id="card" engineer in filtered_engineer_list = ( engineer_list | filter: {name:engineer_search_string}) ng-repeat="task_detail in filtered_overdue_tasks =( tasks| filter : task_search_text)" ng-if="checkIfPast(task_detail.schedule_date)"
+			ng-class="checkIfPast(task_detail.schedule_date, task_detail.task_status) ? 'assigned overdue' : task_detail.task_status" class="button-collapse-engineer task_list{*$index+1*}" >
+				<div ng-click="vm.showDetail_ng($event, task_detail, $index+1)" id="task_list{*$index+1*}">
+				<span class="indicator" ng-if="task_detail.task_status=='unassigned'"><img src="static/tasks/img/{*task_detail.task_status*}.png"  alt="" ng-click="task_status_action(task_detail, 'open')"></span>
+
+				<span class="indicator" ng-if="task_detail.task_status!='unassigned'"><img src="static/tasks/img/{*task_detail.task_status*}.png" alt="" ng-click="task_status_action(task_detail, 'close')" role="button" tabindex="0" style="text-align: center;">
+				<div style="width: 100%;text-align: center;font-size: 0.6em;">{*task_detail.assigned_user_name*}</div></span>
+
+				<span class="notification" ng-show="task_detail.unread_comment!=0">{*task_detail.unread_comment*}</span>
+				<span class="taskindex">T{* $index+1 *} </span>
+				<div class="taskheader">{*task_detail.title*}</div>
+				<div class="taskid">{*task_detail.id*}</div>
+				<div class="taskdesc">{* task_detail.description *}</div>
+				<div class="taskschedule">Schedule on <span class="date">{*task_detail.schedule_date *}</span></div>
+				<div class="taskschedule"><span class="date">{*task_detail.total_comments *}</span><i> Comments</i></div>
+
+				<a href="#taskadd"  class="modal-trigger"><button class="edit" ng-click="edit_function($index+1, task_detail)"><span class="left "><img src="static/tasks/img/edit.png" alt=""></span>Edit</button></a>
+				<a href="#task_details" class="modal-trigger"><button ng-click="comment_list($index+1,task_detail, $index)" 
+					class="details"><span class="left"><img src="static/tasks/img/eye.png" alt=""></span>Details</button></a>
+				
+				<time class="timeago" am-time-ago="task_detail.created_at"></time>
+				
+				<div class="actionbar" ng-show="current_id == task_detail.id && action_bar_view" >
+					
+					<div class="row col s12" ng-if="task_detail.task_status == 'assigned' ">
+						<span class="close" ng-click="task_status_action(task_detail, 'close')"><img src="static/tasks/img/cross.png" alt=""></span>
+						
+						<!-- After karan sir's review the task can be marked as verified only after it has been marked as completed -->
+						<!-- <div class="col s6 verified"><a href="javascript:void(0)" ng-click="mark_as_verified(task_detail.id)" >Mark as verified</a></div> -->
+						<div class="col s6 incomplete" style="left: 50%;"><a href="javascript:void(0)" ng-click="task_status_action_status(task_detail)"> Reassign </a></div>
+
+						<div class="col s6 verified"><a href="javascript:void(0)" ng-click="mark_as_completed(task_detail.id)"> Completed </a></div>
+					</div>
+
+					<div class="row" ng-if="task_detail.task_status == 'completed' ">
+						<span class="close" ng-click="task_status_action(task_detail, 'close')"><img src="static/tasks/img/cross.png" alt=""></span>
+
+						<div class="col s6 incomplete" style="left: 0;"><a href="javascript:void(0)" ng-click="mark_as_assigned(task_detail.id)">Mark as incomplete</a></div>
+						<div class="col s6 verified" style="right: 0;"><a href="javascript:void(0)" ng-click="mark_as_verified(task_detail.id)" >Mark as verified</a></div>
+						
+					</div>
+
+					<div class="row" ng-if="task_detail.task_status == 'verified' ">
+						<span class="close" ng-click="task_status_action(task_detail, 'close')"><img src="static/tasks/img/cross.png" alt="" ng-click="action_bar_view = false "></span>
+						<p>The task has been marked as Verified </p>						
+					</div>
+
+					<div class="row" ng-if="task_detail.task_status == 'unassigned' ">
+						<span class="close" ng-click="task_status_action(task_detail, 'close')"><img src="static/tasks/img/cross.png" alt="" ng-click="action_bar_view = false "></span>
+						<p>Please assign an engineer</p>						
+					</div>
+				
+				</div>
+
+
+				</div>
+			
+			</div>
+			<div id="card" ng-if="filtered_overdue_tasks.length==0" style="text-align: center;">
+				<h5>No overdue tasks</h5>	
+			</div>
+
+		</div>
+	
+	</div>
+	
+</ul>
+
+<div id="modal2" class="modal bottom-sheet" style="width: 50%;margin: 0 auto;">
+	<div class="modal-content">
+	  <h4>Activity log <span style="display: block;float: right; cursor: pointer;" onclick="$('#modal2').modal('close');"><i class="material-icons">close</i></span></h4>
+	  	<ul class="collection">
+          <li class="collection-item avatar" ng-repeat="notifications in notification_list | reverse">
+            <img src="images/yuna.jpg" alt="" class="circle">
+            <span class="title">{*notifications.text*}</span>
+            <a href="#" class="secondary-content"><time class="timeago" am-time-ago="notifications.data.time"></time></a>
+          </li>
+
+          <li class="collection-item avatar" ng-hide="notification_list.length>0">
+            <h4 style="width: 100%;text-align: center;">No Activity yet!</h4>
+          </li>
+
+        </ul>
+	</div>
+	
+</div>
+
+<div ng-if="show_image_full" class="show_image">
+	<span class="close_date_range" ng-click="show_image_full_close()" >
+			<i class="material-icons right">close</i>
+	</span>
+  	<img src="static/image/{* full_image_id *}" style="height: 100%;padding: 2px; margin: 0 auto;" >
+</div>
+
+<div id="task_details" class="modal modal-fixed-header ">
+  	<div class="modal-header">
+  		<div class="row">
+  			<div class="col s12" style="box-shadow: 0px 0px 10px rgba(0,0,0,0.5);">
+		      <ul class="tabs">		
+		        <li class="tab col s4"><a class="active" href="#taskdetails">Task Details</a></li>
+		        <li class="tab col s4" ng-click="comment_tab_click()">
+		        	<a href="#comments" style="position: relative;">Comments
+			        	<span style="position: absolute;width: 25px;height: 25px;background: grey;border-radius:25px;top:5px;" ng-show="vm.shop.unread_comment!=0">
+			        		<p style="margin: 0;line-height: 25px;color: white;">{*vm.shop.unread_comment*}</p>
+			        	</span>
+		        	</a>
+		        </li>
+		        <li class="tab col s4"><a href="#auditlog">Audit Log</a></li>
+		      </ul>
+		    </div>
+  		</div>
+
+  	</div>
+	<div class="modal-content" style="padding: 0px;">
+		<div class="row">
+			<div id="taskdetails" class="col s12">
+				<div class="taskdetailwrap">
+					<div id="card" class="detailed" ng-class="checkIfPast(vm.shop.schedule_date, vm.shop.task_status) ? 'assigned overdue' : vm.shop.task_status" >
+
+						<span class="indicator" ng-if="vm.shop.task_status!='unassigned'"><img src="static/tasks/img/{*vm.shop.task_status*}.png"  alt=""></span>
+						<span class="indicator" ng-if="vm.shop.task_status =='unassigned'"><img src="static/tasks/img/{*vm.shop.task_status*}.png"  alt=""></span>
+						
+						<div class="taskheader">{*vm.shop.title*}</div>
+						<div class="taskid">{* vm.shop.id *} </div>
+						<div class="taskdesc">{* vm.shop.description *}</div>
+						<div class="taskschedule">Scheduled on <span class="date"> {* vm.shop.schedule_date *} </span></div>
+						<div class="assignedto"><span class="date">{* vm.shop.total_comments *} comments</span></div>
+						
+						<div class="assignedto" ng-if="vm.shop.task_status!='unassigned'">Assigned to <span class="date">{* vm.shop.assigned_user_name *}</span></div>
+						
+						<span class="timeago"><time class="timeago" am-time-ago="vm.shop.created_at"></time></span>
+
+						<a href="#taskadd"  class="modal-trigger"><button class="edit" ng-click="edit_function(vm.shop.index, vm.shop)"><span class="left "><img src="static/tasks/img/edit.png" alt=""></span>Edit</button></a>
+
+					</div>
+					
+
+					<div class="row col s12"  style="position: absolute; bottom: 0; text-align: center;" ng-if="vm.shop.task_status == 'assigned' ">
+						<div class="col s6 incomplete"><a href="javascript:void(0)" class="waves-effect waves-light btn blue-grey lighten-1" ng-click="mark_as_completed(vm.shop.id)">Completed</a></div>
+					</div>
+
+					<div class="row col s12" style="position: absolute; bottom: 0; text-align: center;"   ng-if="vm.shop.task_status == 'completed' ">
+						<div class="col s6 incomplete" style="left: 0;"><a href="javascript:void(0)" ng-click="mark_as_assigned(vm.shop.id)" class="waves-effect waves-light btn blue-grey lighten-1">Mark as incomplete</a></div>
+						<div class="col s6 verified" style="right: 0;"><a href="javascript:void(0)" ng-click="mark_as_verified(vm.shop.id)" class="waves-effect waves-light btn blue-grey lighten-1">Mark as verified</a></div>
+						
+					</div>
+					<div class="row col s12"  style="position: absolute; bottom: 0; text-align: center;" ng-if="vm.shop.task_status == 'unassigned' ">
+						<div class="col s6 incomplete"><a href="javascript:void(0)" class="waves-effect waves-light btn blue-grey lighten-1" ng-click="task_status_action(vm.shop, 'open')">Assign</a></div>
+					</div>
+
+					<div class="row col s12"  style="position: absolute; bottom: 0; text-align: center;"  ng-if="vm.shop.task_status == 'unassigned' ">
+						<p>Please assign an engineer</p>						
+					</div>
+
+				</div>
+			</div>
+	<div id="comments" class="col s12">
+
+	    <!-- <ul id="commentwrap">
+	    	<li class="comment" ng-repeat="comments in comments_list">
+	    		<h5> {*comments.comment_by_name *} <span>- 5 minutes ago</span></h5>
+	    		<p>{*comments.comment_text*}</p>
+	    		<img ng-if="comments.image_id" src="static/image/{*comments.image_id*}" alt="">
+	    	</li>
+
+	    	
+	    </ul> -->
+	    <div class="comment-wrap">
+		    <div class="commentwrap" ng-repeat="comments in comments_list" >
+					<img src="static/tasks/img/user.png" alt="" class="userpic">
+					<div class="img"><img ng-if="comments.image_id" src="static/image/{*comments.image_id*}" alt="" 
+						style="cursor: pointer;" 
+						ng-click="show_image_full_activate(comments.image_id)"></div>
+					<p>{*comments.comment_text*}</p>
+					<div class="commentby"><i>{*comments.comment_by_name *} - <time class="timeago" am-time-ago="comments.created_at"></time></i> <span class="sync"><img src="" alt=""></span></div>
+			</div>
+		</div>
+
+		<div class="comment" ng-hide="comments_list.length>0" style="text-align: center;">
+	                    <p class="no_comments_yet">No Comments yet!</p>
+	    </div>
+
+    <div class="footer">
+		<div class="row">
+			<div class="col s1" style="padding:0; ">
+
+				<div class="file-field input-field" style="margin: 0;">
+					<div class="btn" style="background: transparent; box-shadow: none; padding: 0;">
+						<span class="attachment"><img src="static/tasks/img/picture.png" alt=""></span>
+						<input type="file" id= "filed" class="file-path validate" ngf-select ng-model="pic_file" name="file" onchange="angular.element(this).scope().readURL(this);" ngf-accept="'image/*'" ngf-min-height="200" ngf-model-invalid="errorFiles" ngf-min-width="320" multiple>
+					
+					</div>
+					<div class="file-path-wrapper">
+						<input class="file-path validate" type="text" >
+					</div>
+				</div>
+
+			</div>
+
+			<div class="image-view" ng-show="preview!=''">
+				<img src="{*preview*}" id="preview" alt=""> 	
+				<span class="close_image_preview"><img src="static/tasks/img/cross.png" ng-click="resetImage()" alt=""></span>
+			</div>
+
+			<div class="col s10" style="padding-left: 0;">
+				<textarea name="" id="" cols="30" rows="10" ng-model="comment_description" my-enter="comment()"></textarea>
+			</div>
+
+			<div class="col s1" style="padding: 0;text-align: left;">
+				<button ng-click="comment()" type="submit" style="background: none; padding: 0px; border: none; margin: 0; padding-left: 10px;"><img class="send" src="static/tasks/img/sent.png" alt="">
+				</button>
+			</div>
+
+		</div>     
+	</div>
+</div>
+			<div id="auditlog" class="col s12" >
+			    	<ul>
+			    		<li class="loglist" ng-repeat="auditlog_array in vm.shop.audit_log | reverse">
+			    			<!-- <p> {*auditlog_array*}</p> -->
+							<div ng-repeat="(key,value) in auditlog_array.changed_key">
+
+								
+
+			    				<p class="log"><strong>{*auditlog_array.user_name*} </strong> changed <strong>{*key*}</strong> from  <strong>{*value[0]*}</strong> to <strong>{*value[1]*} </strong> </p>			
+			    			
+			    			</div>
+			
+			    			
+			    			<time class="timeago" am-time-ago="auditlog_array.time"></time>
+			    			
+			    		</li>
+			    	</ul>
+			</div>
+		</div>
+	</div>
+	
+  </div>
+  
+
+<!-- _________________ -->
+</div>
+
+<div ng-controller="AddTaskController as vm1" id="add_task" >
+	
+   <div style="position: absolute; bottom:5vh; right: 5vh; transition: 0.3s linear;">
+		<button class="addtask modal-trigger" href="#taskadd" ng-click="open_modal()">Add Task</button>
+   </div>
+<!-- <a class="waves-effect waves-light btn modal-trigger" href="#modal1">Modal</a> -->
+
+
+ <div id="taskadd" class="modal modal-fixed-footer" style="background: rgb(255, 252, 252) !important;z-index: 3 !important;">
+	<div class="modal-content">
+		<div class="row">
+		<div class="col s12">
+			<p style="text-align: center;font-size: 2em;margin: 0;font-family: raleway;text-transform: uppercase;font-weight: 700;opacity: 0.75;letter-spacing: 2px;" ng-show="task_id==0">Add Task</p>
+			<p style="text-align: center;font-size: 2em;margin: 0;font-family: raleway;text-transform: uppercase;font-weight: 700;opacity: 0.75;letter-spacing: 2px;" ng-show="task_id!=0">Edit Task</p>
+			
+		</div>
+
+		 <form name="myForm"  novalidate>
+                  
+		<div class="input-field col s6">
+			<input id="input_text" type="text" name="title" ng-model="title" tabindex="1" required>
+            <label for="input_text" ng-class="{active: 1==1}" >Title *</label>
+            
+		</div>
+		<div class="input-field col s6">
+			<label  tabindex="2" ng-class="{active: schedule_date!=''}">Schedule Date *</label>
+            <input type="text" class="datepicker" name="schedule_date" ng-change="get_engineer_list_by_schedule_date()" id="schedule_date" ng-model="schedule_date" required >
+            
+            
+		</div>
+		<div class="input-field col s6">
+			<textarea id="textarea" class="materialize-textarea" ng-model="description" tabindex="3" required></textarea>
+            <label for="textarea" ng-class="{active: description!=''}" >Description *</label>
+            
+		</div>
+		<div class="input-field col s6">
+	        <label style="position: relative;left: 0;padding-bottom: 22px;display: inline-block;" for="city">Assigned to - Total task</label>
+	          <select class="form-control" select2="" name="city" data-ng-model="engineer" ng-options="c.id as c.name+' - '+( c.tasks_info.todays_tasks ) for c in engineer_schedule_list" tabindex="4">
+	            <option value="">Unassigned</option>
+	          </select>
+	        <span style="color:red" ng-show="engineer == -1">
+	            <span ng-show="engineer == -1">Engineer is required.</span>
+	        </span>
+	      </div>
+		<!-- <div class="input-field col s12">
+			<input placeholder="Location" id="task_location" type="text" class="validate">
+			<label for="task_location">Task Location</label>
+			<div class="mapwrap"></div>	
+		</div> -->
+		<div class="input-field col s12">
+	         <select ng-model="vm1.types" class="form-control" >
+	            <option value="['geocode']">Geodode</option>
+	            <option value="['establishment']">Establishment</option>
+	            <option value="['address']">Address</option>
+	          </select><br/>
+
+              Enter an address *: <br/>
+                <input places-auto-complete size=80 ng-model="vm1.address" types="{*vm1.types*}" component-restrictions="{country:'in'}" on-place-changed="vm1.placeChanged()" tabindex="5" /> <br/>
+                <ng-map id="add_task" on-click="vm1.addMarker()" center="{*center_latitude*}, {*center_longitude*}">
+                  <marker ng-repeat="marker in vm1.markers" position="{*marker.pos*}" draggable="true"></marker>
+                </ng-map>
+        </div>
+	  </div>
+	</div>
+	<div class="modal-footer">
+		<a href="javascript:void(0);" class="modal-action modal-close waves-effect  btn-flat" style="border: 2px solid #d04d52; background: transparent; color: #f44336;" tabindex="7" >CANCEL</a>
+		<a href="#" class="modal-action waves-effect btn-flat red" ng-click="task_create()"  my-enter="task_create()" ng-disabled="myForm.$invalid" style="color:#ffffff; background: #d04d52;" ng-show="task_id==0" tabindex="6">ADD TASK</a>
+		<a href="#" class="modal-action waves-effect btn-flat red" ng-click="task_create()" my-enter="task_create()" ng-disabled="myForm.$invalid" style="color:#ffffff; background: #d04d52;" ng-show="task_id!=0" tabindex="6">EDIT TASK</a>
+
+		<a href="#" id="clickMe" class="modal-close" style="visibility: hidden;">click</a>
+		 
+	</div>
+	</form>
+  </div>
+</div>
+  <div id="logout_modal" class="modal">
+    <div class="modal-content">
+      <strong>Are you sure you want to logout ?</strong>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" ng-click="logout()" >Logout</a>
+    </div>
+  </div>
+
+
+
+
+
+  <!-- <a href="#" data-activates="slide-out-engineer" class="button-collapse-engineer"><i class="material-icons">menu</i></a> -->
+	
+
+</body>
+
+<script src="https://code.jquery.com/jquery-2.2.4.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+<script src="https://maps.google.com/maps/api/js?key=AIzaSyAlMQrWo9Pmiz0hM5b9ZPkAdG6QVN2xzQM&libraries=placeses,visualization,drawing,geometry,places"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.5.1/moment.min.js"></script>
+
+<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>  -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.4/js/select2.min.js"></script>
+<script src="https://code.angularjs.org/1.3.15/angular.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js"></script>
+<!-- Angular Material Library -->
+<script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+
+<!-- Your application bootstrap  -->
+<script src="https://rawgit.com/allenhwkim/angularjs-google-maps/master/build/scripts/ng-map.js"></script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.13/ng-file-upload.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.13/ng-file-upload-shim.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-cookies.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+<!-- <script src="static/js/tasks_functions.js"></script> -->
+
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.0.3/angular-sanitize.js"></script>
+
+<script src="static/tasks/js/script.js"></script>
+<script src="static/tasks/js/tasks.js"></script>
+<script src="static/tasks/js/tasks_functions.js"></script>
+<script src="static/tasks/js/angular-moment.js"></script>
+
+<script src="https://rawgit.com/allenhwkim/angularjs-google-maps/master/testapp/scripts/markerclusterer.js"></script>
+
+<script>
+    MarkerClusterer.prototype.MARKER_CLUSTER_IMAGE_PATH_ 
+      = 'https://raw.githubusercontent.com/googlemaps/js-marker-clusterer/gh-pages/images/m';  //changed image path
+  </script>
+
+</html>
+
+<style type="text/css">
+	
+	.tabs .tab a.active
+	{
+		border-bottom: 2px solid #24313f;
+	}
+</style>
+<!-- 
+/engineers todo
+
+table search   			-done
+highlight tabs 			-done
+errors 					-done
+10-digit no. validation -done
+no alert boxes 			-done
+enter on form not working = submit form
+UPDATE engineer list 	-done
+
+Edit/update (show engineer task based on the date)
+Redigsn engineer list 
+cluster problem with engineer
+no overdue task error
+zoom level in add form
+Unassigned task colour scheme on the map shoul be same
+On click on map card highlight
+info window at wrong location on the marker
+mark as verified should only b after completion
+engineer name on cards
+detail box underline
+tasklist back button
+label unassign instead of <select engineer> - Done
+marker clustering
+marker card should be same
+comment (time) - Done
+photo preview on comment
+comment design not correct
+deactivated engineer should not be shown in list of engineers - Done
+
+-->

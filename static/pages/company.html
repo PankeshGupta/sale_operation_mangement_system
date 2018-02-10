@@ -1,0 +1,213 @@
+<div ng-controller="companyController" class="container" ng-init="get_state_list(456528908)" ng-cloak>
+  <h3>company list </h3>
+  <table>
+    <tr>
+      <th>Company name |</th>
+      <th>Edit</th> </tr>
+
+      <tr ng-repeat="company in company_listing">
+        <td data-ng-bind="company.name">
+          <td><button ng-click="" type="submit" data-toggle="modal" data-target="#{{company.name}}"> Edit</button></td>
+        </tr>
+      </table>
+
+      <div data-ng-repeat="company in company_listing">
+        <div class="modal fade" id="{{company.name}}" role="dialog">
+          <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Edit company</h4>
+              </div>
+              <div class="modal-body">
+                <form>
+                  <div class="form-group">
+                    <label for="inputName" class="col-form-label">Company Name</label>
+                    <input type="text" class="form-control" id="inputName" placeholder="SNA power pvt. ltd " ng-model="company.name">
+                  </div>
+
+                  <!-- Adding multiple adresses -->
+
+                  <button class="addfields" ng-click="addNewAddress()">Add Address</button>
+                  <fieldset  data-ng-repeat="address in company.addresses">
+                    <button class="remove" ng-show="$last" ng-click="removeAddress()">Remove this Adress</button>
+                    <label class="col-form-label">Address Type</label>
+                    <select>
+                     <option>Office</option>
+                     <option>Home</option>
+                   </select>  
+                   <div class="form-group">
+                    <label for="inputAddress" class="col-form-label">Address</label>
+                    <input ng-model="address.address1" type="text" class="form-control" id="inputAddress" placeholder="1234 Main St">
+                  </div>
+                  <div class="form-group">
+                    <label for="inputAddress2" class="col-form-label">Address 2</label>
+                    <input ng-model="address.address2" type="text" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor">
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label for="inputCity" class="col-form-label">City</label>
+                      <input ng-model="address.city" type="text" class="form-control" id="inputCity">
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label for="inputState" class="col-form-label">State</label>
+                      <select id="inputState" class="form-control">Choose</select>
+                    </div>
+                    <div class="form-group col-md-2">
+                      <label for="inputZip" class="col-form-label">Zip</label>
+                      <input ng-model="address.zip" type="text" class="form-control" id="inputZip">
+                    </div>
+                  </fieldset>
+
+                  <!-- Adding Multiple contacts  --> 
+
+                  <button class="addfields" ng-click="addNewContact()">Add New Contact </button>
+                  <fieldset  data-ng-repeat="contact in company.contacts">
+                    <button class="remove" ng-show="$last" ng-click="removeContact()">Remove this Contact </button>
+                    <label class="col-form-label">Contact Type</label>
+                    <select>
+                     <option>Executive</option>
+                     <option>Owner</option>
+                   </select>  
+                   <div class="form-group">
+                    <label for="inputContactName" class="col-form-label">Person Name </label>
+                    <input id= "inputContactName" ng-model="contact.name" type="text" class="form-control" placeholder="eg.pankesh">
+                  </div>
+                  <div class="form-group">
+                    <label for="inputPhoneNumber" class="col-form-label">Phone number</label>
+                    <input ng-model="contact.phone_number" type="text" class="form-control" id="inputPhoneNumber" placeholder="eg: +919988811061">
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label for="inputContactEmail" class="col-form-label">Email</label>
+                      <input ng-model="contact.email" type="text" class="form-control" id="inputContactEmail" placeholder="post4pankesh@gmail.com">
+                    </div>
+                  </fieldset>
+
+
+                  <!-- submit button to submit the form  -->
+                  <div class="form-group row">
+                    <div class="col-sm-10">
+                      <button ng-click="editCompanyDetails(company)" type="submit" class="btn btn-primary"> Add Company</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default">Close</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <hr>
+
+      <h4>Add new company</h4>
+      <form name = "form" ng-submit="userForm.$valid && addCompanyDetails()" novalidate >
+        <div class="form-group">
+          <label for="inputName" class="col-form-label" >Company Name </label>
+          <input type="text" class="form-control" placeholder="SNA power pvt. ltd " ng-model="company.name" required = "" name="companyName">
+
+          <br />
+          <div ng-show="form.$submitted || form.companyName.$touched">
+            <div style="color: red " ng-show="form.companyName.$error.required">Company field is required</div>
+          </div>
+
+        </div>
+
+        <!-- Adding multiple adresses -->
+
+        <button class="addfields" ng-click="addNewAddress()">Add Address</button>
+        <fieldset  data-ng-repeat="addressChoice in addressChoices">
+          <button class="remove" ng-show="$last" ng-click="removeAddress()">Remove this Adress</button>
+          <label class="col-form-label">Address Type</label>
+          <select>
+           <option>Office</option>
+           <option>Home</option>
+         </select>  
+         <div class="form-group">
+          <label for="inputAddress" class="col-form-label">Address1</label>
+          <input ng-model="addressChoice.address1" type="text" class="form-control" id="inputAddress" placeholder="1234 Main St" required ="" name="addressChoice.address1">
+          <br/>
+          <div ng-show="form.$submitted || form.addressChoice.address1.$touched">
+            <div style="color: red " ng-show="form.addressChoice.address1.$error.required">Address1 field is required</div>
+          </div>  
+        </div>
+        <div class="form-group">
+          <label for="inputAddress2" class="col-form-label">Address 2</label>
+          <input ng-model="addressChoice.address2" type="text" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor">
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="inputCity" class="col-form-label">City</label>
+            <input ng-model="addressChoice.city" type="text" class="form-control" id="inputCity" required >
+            <br />
+            <div ng-show="form.$submitted || form.addressChoice.city.$touched">
+              <div style="color: red " ng-show="form.addressChoice.city.$error.required">City field is required</div>
+            </div>
+
+          </div>
+          <div class="form-group col-md-4">
+            <label for="inputState" class="col-form-label">State</label>
+            <select>
+             <option>Chandigarh</option>
+             <option>Delhi</option>
+           </select>
+         </div>
+         <div class="form-group col-md-2">
+          <label for="inputZip" class="col-form-label">Zip</label>
+          <input ng-model="addressChoice.zip" type="text" class="form-control" id="inputZip" required>
+          <br />
+          <div ng-show="form.$submitted || form.addressChoice.zip.$touched">
+            <div style="color: red " ng-show="form.addressChoice.zip.$error.required">Zip field is required</div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Adding Multiple contacts  -->
+
+      <button class="addfields" ng-click="addNewContact()">Add New Contact </button>
+      <fieldset  data-ng-repeat="contact in contactChoices">
+        <button class="remove" ng-show="$last" ng-click="removeContact()">Remove this Contact </button>
+        <label class="col-form-label">Contact Type</label>
+        <select>
+         <option>Executive</option>
+         <option>Owner</option>
+       </select>  
+       <div class="form-group">
+        <label for="inputContactName" class="col-form-label">Person Name </label>
+        <input id= "inputContactName" ng-model="contact.name" type="text" class="form-control" placeholder="eg.pankesh" required >
+      </div>
+      <div class="form-group">
+        <label for="inputPhoneNumber" class="col-form-label">Phone number</label>
+        <input ng-model="contact.phone_number" type="text" class="form-control" id="inputPhoneNumber" placeholder="+919988811061" required >
+        <br />
+        <div ng-show="form.$submitted || form.contact.phone_number.$touched">
+          <div style="color: red " ng-show="form.contact.phone_number.$error.required">Phone number is required</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="inputContactEmail" class="col-form-label">Email</label>
+          <input ng-model="contact.email" type="email" class="form-control" id="inputContactEmail" required >
+          <br />
+          <div ng-show="form.$submitted || form.contact.email.$touched">
+            <div style="color: red " ng-show="form.contact.email.$error.required">E-mail is required</div>
+          </div>
+        </div>
+      </fieldset>
+
+
+      <!-- submit button to submit the form  -->
+      <div class="form-group row">
+        <div class="col-sm-10">
+          <button type="submit" class="btn btn-primary"> Add Company</button>
+        </div>
+      </div>
+    </form>
+  </div>
+

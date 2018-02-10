@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>SNA OMS v2 Engineer Management </title>
+    <link rel="icon" href="http://snapower.net/assets/images/faviconsna.png" type="image/gif" sizes="16x16">
+
+    <link href="static/css/style.css" rel="stylesheet">
+    <!-- Bootstrap core CSS-->
+    <link href="static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom fonts for this template-->
+    <link href="static/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <!-- Custom styles for this template-->
+    <link href="static/css/sb-admin.css" rel="stylesheet">
+    <script src="static/js/sb-angular.min.js"></script>
+    <script src="static/angular/login.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-cookies.js"></script>
+    
+</head>
+
+<body ng-app="myApp" ng-init="$scope.otp_generated = null" class="bg-dark" ng-cloak>
+    <div ng-controller="login">
+        <div class="container">
+            <div class="card card-login mx-auto mt-5">
+                <div>
+                    <div class="card-header">SNA OMS</div>
+                    <div class="card-body">
+                        <form name="login_form" ng-submit="verify_user(login_form.$valid)"  novalidate="">
+                            <div class="form-group">
+                                <label for="user_name"><strong>Phone number</strong> </label>
+                                <div class="input-group">
+                                 
+                                
+                                <span class="input-group-addon" id="basic-addon1">+91</span>
+                                <input id="phone" 
+                                class="form-control" type="tel"
+                                ng-model="user.phone"
+                                name="phone" 
+                                ng-pattern="/^[0-9]*$/"
+                                placeholder="9988811061"
+                                required="" minlength=10 maxlength=10
+                                ng-disabled="otp_generated"
+                                autofocus
+
+                                 >
+                                </div>
+                                <div class="error" ng-show="login_form.phone.$invalid">
+                                    <div ng-show="login_form.$submitted && login_form.phone.$invalid">
+                                        <p style="font-size: 15px"> Phone number should be 10 digit number, containing only number between 0-9 </p>
+                                    </div>
+
+                                </div>
+                                
+                                <div class="error" ng-show="email_error">
+                                    <p ng-bind="email_error"></p>                                    
+                                </div>   
+                                
+                                <br>
+                                
+                                <button type="submit" ng-if="!(otp_generated)" class="btn btn-primary" ng-disabled="loading" > <span ng-bind="gen_otp_text"></span> </button>
+
+                            </div>
+
+                        </form>
+                        
+
+
+                        <form ng-show="otp_generated" name="form_otp" ng-submit="verify_otp(user.otp)">
+                            <label> <strong>OTP</strong> </label>
+
+                            <input class="form-control" type="text"
+                            ng-model="user.otp"
+                            placeholder="Enter OTP"
+                            name="user_otp"
+                            ng-pattern="/^[0-9]*$/"
+                            minlength=4 maxlength=4
+                            required
+                            autofocus
+                            >
+                            <div class="error" ng-show="login_form.user_email.$invalid">
+                                <div ng-show="login_form.user_email.$pristine" >
+                                    <p>*mandatory</p>                                        
+                                </div>
+                            </div>
+                            <div class="error" ng-show="otp_error">
+                                <p>Incorrect OTP</p>
+                            </div>
+                                
+                                <br>
+                                <button type="submit" class="btn btn-primary" ng-disabled="loading"> <span ng-bind="verify_otp_text"></span></button>
+                            </form>
+
+
+
+                            <div class="text-center" ng-show="otp_generated">
+                                <a class="d-block small mt-3" href="javascript:void(0)" ng-click="reset_phone()">Reset phone number</a>
+                                <a class="d-block small" href="javascript:void(0)" ng-click="verify_user(login_form.$valid)" >Resend OTP</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Bootstrap core JavaScript-->
+        <script src="static/vendor/jquery/jquery.min.js"></script>
+        <script src="static/vendor/popper/popper.min.js"></script>
+        <script src="static/vendor/bootstrap/js/bootstrap.min.js"></script>
+        <!-- Core plugin JavaScript-->
+        <script src="static/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    </body>
+    <script>
+        $('#phone').focus();
+    </script>
+
+    </html>
